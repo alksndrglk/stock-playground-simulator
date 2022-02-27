@@ -106,7 +106,21 @@ class StockMarketEventModel(db.Model):
 
 @dataclass
 class BrokerageAccount:
-    pass
+    id: Optional[int]
+    user_id: int
+    game_id: int
+    points: float
+    portfolio: Dict[str, int]
+
 
 class BrokerageAccountModel(db.Model):
-    pass
+    __tablename__ = "brokerage_account"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    game_id = db.Column(db.Integer, db.ForeignKey("game.id"), nullable=False)
+    points = db.Column(db.Integer)
+    portfolio = db.Column(db.JSONB, server_default="{}")
+
+    def to_dct(self):
+        return BrokerageAccount(**self.to_dict())
