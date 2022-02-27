@@ -40,10 +40,24 @@ class GameModel(db.Model):
 
 @dataclass
 class User:
-    pass
+    id: int
+    user_id: int
+    user_name: str
+
 
 class UserModel(db.Model):
-    pass
+    __tablename__ = "user"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, unique=True, nullable=False)
+    user_name = db.Column(db.String)
+    created_at = db.Column(db.DateTime(), server_default="now()")
+
+    game = db.Column(db.Integer, db.ForeignKey("game.id"))
+
+    def to_dct(self):
+        return User(id=self.id, user_id=self.user_id, user_name=self.user_name)
+
 
 @dataclass
 class Stock:
