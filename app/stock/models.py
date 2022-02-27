@@ -61,10 +61,30 @@ class UserModel(db.Model):
 
 @dataclass
 class Stock:
-    pass
+    id: Optional[int]
+    symbol: str
+    description: str
+    cost: float
+    game_id: Optional[int]
+
 
 class StockModel(db.Model):
-    pass
+    __tablename__ = "stock"
+
+    id = db.Column(db.Integer, primary_key=True, index=True)
+    symbol = db.Column(db.String, unique=True, index=True)
+    description = db.Column(db.String, nullable=False)
+    cost = db.Column(db.Float, nullable=False)
+
+    def to_dct(self):
+        return Stock(**self.to_dict())
+
+
+class GameStockModel(db.Model, StockModel):
+    __tablename__ = "stock_in_game"
+
+    game_id = db.Column(db.Integer, db.ForeignKey("game.id"))
+
 
 @dataclass
 class StockMarketEvent:
