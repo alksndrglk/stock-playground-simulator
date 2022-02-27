@@ -88,10 +88,20 @@ class GameStockModel(db.Model, StockModel):
 
 @dataclass
 class StockMarketEvent:
-    pass
+    id: Optional[int]
+    message: str
+    diff: int
+
 
 class StockMarketEventModel(db.Model):
-    pass
+    __tablename__ = "market_event"
+
+    id = db.Column(db.Integer, primary_key=True)
+    message = db.Column(db.String, nullable=False)
+    diff = db.Column(db.Integer, nullable=False)
+
+    def to_dct(self):
+        return StockMarketEvent(**self.to_dict())
 
 
 @dataclass
