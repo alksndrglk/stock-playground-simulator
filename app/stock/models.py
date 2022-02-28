@@ -44,6 +44,7 @@ class User:
     id: int
     vk_id: int
     user_name: str
+    games: set
 
 
 class UserModel(db.Model):
@@ -56,22 +57,27 @@ class UserModel(db.Model):
 
     def __init__(self):
         self._games = set()
-        
+
     @property
     def games(self):
         return self._games
 
     def to_dct(self) -> User:
-        return User(id=self.id, user_id=self.user_id, user_name=self.user_name)
+        return User(
+            id=self.id,
+            vk_id=self.user_id,
+            user_name=self.user_name,
+            games=self._games,
+        )
 
-    
+
 class GameXUser(db.Model):
     __tablename__ = "games_x_users"
-    
-    game_id = db.Column(db.Integer, db.ForeignKey('game.id'))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    
-    
+
+    game_id = db.Column(db.Integer, db.ForeignKey("game.id"))
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+
+
 @dataclass
 class Stock:
     id: Optional[int]
