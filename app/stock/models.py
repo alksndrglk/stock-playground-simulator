@@ -31,17 +31,18 @@ class GameModel(db.Model):
         return self._users
 
     @users.setter
-    def add_users(self, user):
+    def add_users(self, user: UserModel):
         self._users.append(user)
+        user.games.add(self)
 
-    def to_dct(self):
+    def to_dct(self) -> Game:
         return Game(users=self.users, chat_id=self.chat_id, state=self.state)
 
 
 @dataclass
 class User:
     id: int
-    user_id: int
+    vk_id: int
     user_name: str
 
 
@@ -50,15 +51,27 @@ class UserModel(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, unique=True, nullable=False)
-    user_name = db.Column(db.String)
+    user_name = db.Column(db.String, nullable=False)
     created_at = db.Column(db.DateTime(), server_default="now()")
 
-    game = db.Column(db.Integer, db.ForeignKey("game.id"))
+    def __init__(self):
+        self._games = set()
+        
+    @property
+    def games(self):
+        return self._games
 
-    def to_dct(self):
+    def to_dct(self) -> User:
         return User(id=self.id, user_id=self.user_id, user_name=self.user_name)
 
-
+    
+class GameXUser(db.Model):
+    __tablename__ = "games_x_users"
+    
+    game_id = db.Column(db.Integer, db.ForeignKey('game.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    
+    
 @dataclass
 class Stock:
     id: Optional[int]
@@ -76,7 +89,7 @@ class StockModel(db.Model):
     description = db.Column(db.String, nullable=False)
     cost = db.Column(db.Float, nullable=False)
 
-    def to_dct(self):
+    def to_dct(self) -> Stock:
         return Stock(**self.to_dict())
 
 
@@ -100,7 +113,7 @@ class StockMarketEventModel(db.Model):
     message = db.Column(db.String, nullable=False)
     diff = db.Column(db.Integer, nullable=False)
 
-    def to_dct(self):
+    def to_dct(self) -> StockMarketEvent:
         return StockMarketEvent(**self.to_dict())
 
 
@@ -122,5 +135,5 @@ class BrokerageAccountModel(db.Model):
     points = db.Column(db.Integer)
     portfolio = db.Column(db.JSONB, server_default="{}")
 
-    def to_dct(self):
+    def to_dct(self) -> BrokerageAccount:
         return BrokerageAccount(**self.to_dict())
