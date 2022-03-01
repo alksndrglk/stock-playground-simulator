@@ -1,11 +1,12 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
 class UpdateObject:
     id: int
-    user_id: int
+    peer_id: int
     body: str
+    action: str
 
 
 @dataclass
@@ -16,5 +17,6 @@ class Update:
 
 @dataclass
 class Message:
-    user_id: int
+    peer_id: int
     text: str
+    keyboard : dict = field(default_factory=dict)

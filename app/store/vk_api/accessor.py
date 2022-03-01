@@ -89,9 +89,10 @@ class VkApiAccessor(BaseAccessor):
                     Update(
                         type=update["type"],
                         object=UpdateObject(
-                            id=update["object"]["id"],
-                            user_id=update["object"]["user_id"],
-                            body=update["object"]["body"],
+                            id=update["object"]["message"]["id"],
+                            peer_id=update["object"]["message"]["peer_id"],
+                            body=update["object"]["message"]["text"],
+                            action=update["object"]["message"].get("action", {}),
                         ),
                     )
                 )
@@ -99,18 +100,19 @@ class VkApiAccessor(BaseAccessor):
             # await self.app.store.bots_manager.handle_updates(updates)
 
     async def send_message(self, message: Message) -> None:
-        async with self.session.get(
-            self._build_query(
-                API_PATH,
-                "messages.send",
-                params={
-                    "user_id": message.user_id,
-                    "random_id": random.randint(1, 2 ** 32),
-                    "peer_id": "-" + str(self.app.config.bot.group_id),
-                    "message": message.text,
-                    "access_token": self.app.config.bot.token,
-                },
-            )
-        ) as resp:
+        query = self._build_query(
+            API_PATH,
+            "messages.send",
+            params={
+                "peer_id": message.peer_id,
+                "random_id": random.randint(1, 2 ** 32),
+                "group_id": str(self.app.config.bot.group_id),
+                "message": message.text,
+                "access_token": self.app.config.bot.token,
+                "keyboard": message.keyboard,
+            },
+        )
+        print(query)
+        async with self.session.get(query) as resp:
             data = await resp.json()
             self.logger.info(data)
