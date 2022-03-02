@@ -50,6 +50,7 @@ class BotManager:
 
     async def start(self, peer_id):
         players = await self.app.store.vk_api.get_conversation_members(peer_id)
+        await self.app.store.exchange.create_game(players, peer_id)
         await self.send_keyboard(peer_id, text="Выберите действие")
         self.logger.info(players)
 

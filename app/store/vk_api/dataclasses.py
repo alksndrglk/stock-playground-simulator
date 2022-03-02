@@ -7,6 +7,7 @@ from typing import Optional, Union
 class UpdateObject:
     id: int
     peer_id: int
+    user_id: int
     body: str
     action: str
     payload : dict = field(default_factory=dict)
@@ -20,6 +21,7 @@ class Update:
 
 @dataclass
 class Message:
+    # user_id: int
     peer_id: int
     text: str
     keyboard : dict['str', Union[bool,list]] = field(default_factory=dict)
