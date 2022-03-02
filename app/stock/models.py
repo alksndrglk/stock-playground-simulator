@@ -81,11 +81,11 @@ class GameXUser(db.Model):
 
 @dataclass
 class Stock:
-    id: Optional[int]
     symbol: str
     description: str
     cost: float
-    game_id: Optional[int]
+    id: Optional[int] = None
+    game_id: Optional[int] = None
 
 
 class StockModel(db.Model):
