@@ -95,6 +95,7 @@ class VkApiAccessor(BaseAccessor):
                             peer_id=peer_id
                             if peer_id
                             else update["object"].get("message", {}).get("peer_id"),
+                            user_id=update["object"].get("message", {}).get("from_id"),
                             body=update["object"].get("message", {}).get("text"),
                             action=update["object"]
                             .get("message", {})
@@ -122,7 +123,7 @@ class VkApiAccessor(BaseAccessor):
                 data = await resp.json()
                 users = []
                 if not data.get("error", False):
-                    for profile in data['response'].get("profiles"):
+                    for profile in data["response"].get("profiles"):
                         print(profile)
                         users.append(
                             User(
@@ -138,6 +139,7 @@ class VkApiAccessor(BaseAccessor):
             "messages.send",
             params={
                 "peer_id": message.peer_id,
+                # "user_id": message.user_id,
                 "random_id": random.randint(1, 2 ** 32),
                 "group_id": str(self.app.config.bot.group_id),
                 "message": message.text,

@@ -3,15 +3,41 @@ from typing import Optional
 from app.base.base_accessor import BaseAccessor
 from app.stock.models import (
     Game,
+    GameModel,
+    GameXUser,
     User,
     Stock,
     StockMarketEvent,
     BrokerageAccount,
+    UserModel,
+    GameStockModel,
+    StockModel,
 )
 from typing import List
 
 
 class ExchangeAccessor(BaseAccessor):
+    async def create_game(self, players, peer_id):
+        game = await GameModel(chat_id=peer_id).create()
+        users = await UserModel.insert().gino.all(
+            [
+                {
+                    "user_id": player.user_id,
+                    "user_name": player.user_name,
+                }
+                for player in players
+            ]
+        )
+        await GameXUser.insert().gino.all(
+            [
+                {
+                    "game_id": game.id,
+                    "user_id": u.id,
+                }
+                for u in users
+            ]
+        )
+
     async def get_stock_by_symbol(self, symbol: str) -> Optional[Stock]:
         pass
 
