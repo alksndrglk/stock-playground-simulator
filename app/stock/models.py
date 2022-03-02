@@ -1,50 +1,16 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
 from app.store.database.gino import db
-
-
-@dataclass
-class Game:
-    users: List[User]
-    chat_id: int
-    state: dict
-
-
-class GameModel(db.Model):
-    __tablename__ = "game"
-
-    id = db.Column(db.Integer, primary_key=True)
-    created_at = db.Column(db.DateTime(), server_default="now()")
-    chat_id = db.Column(db.Integer, nullable=False)
-    round_info = db.Column(db.JSONB, server_default="{}")
-    round_number = db.IntegerProperty(prop_name="round_info")
-    finished_bidding = db.ArrayProperty(prop_name="round_info")
-    state = db.Column(db.JSONB, server_default="{}")
-
-    def __init__(self, **kw):
-        super().__init__(**kw)
-        self._users = []
-
-    @property
-    def users(self):
-        return self._users
-
-    @users.setter
-    def add_users(self, user: UserModel):
-        self._users.append(user)
-        user.games.add(self)
-
-    def to_dct(self) -> Game:
-        return Game(users=self.users, chat_id=self.chat_id, state=self.state)
+from gino.dialects.asyncpg import JSONB
 
 
 @dataclass
 class User:
-    id: int
     vk_id: int
     user_name: str
-    games: set
+    id: Optional[int] = None
+    games: Optional[set] = field(default_factory=set)
 
 
 class UserModel(db.Model):
@@ -69,6 +35,41 @@ class UserModel(db.Model):
             user_name=self.user_name,
             games=self._games,
         )
+
+
+@dataclass
+class Game:
+    users: List[User]
+    chat_id: int
+    state: dict
+
+
+class GameModel(db.Model):
+    __tablename__ = "game"
+
+    id = db.Column(db.Integer, primary_key=True)
+    created_at = db.Column(db.DateTime(), server_default="now()")
+    chat_id = db.Column(db.Integer, nullable=False)
+    round_info = db.Column(JSONB, server_default="{}")
+    round_number = db.IntegerProperty(prop_name="round_info")
+    finished_bidding = db.ArrayProperty(prop_name="round_info")
+    state = db.Column(JSONB, server_default="{}")
+
+    def __init__(self, **kw):
+        super().__init__(**kw)
+        self._users = []
+
+    @property
+    def users(self):
+        return self._users
+
+    @users.setter
+    def add_users(self, user: UserModel):
+        self._users.append(user)
+        user.games.add(self)
+
+    def to_dct(self) -> Game:
+        return Game(users=self.users, chat_id=self.chat_id, state=self.state)
 
 
 class GameXUser(db.Model):
@@ -99,7 +100,7 @@ class StockModel(db.Model):
         return Stock(**self.to_dict())
 
 
-class GameStockModel(db.Model, StockModel):
+class GameStockModel(StockModel):
     __tablename__ = "stock_in_game"
 
     game_id = db.Column(db.Integer, db.ForeignKey("game.id"))
@@ -139,7 +140,7 @@ class BrokerageAccountModel(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     game_id = db.Column(db.Integer, db.ForeignKey("game.id"), nullable=False)
     points = db.Column(db.Integer)
-    portfolio = db.Column(db.JSONB, server_default="{}")
+    portfolio = db.Column(JSONB, server_default="{}")
 
     def to_dct(self) -> BrokerageAccount:
         return BrokerageAccount(**self.to_dict())
