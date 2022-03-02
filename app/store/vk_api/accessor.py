@@ -8,6 +8,7 @@ from aiohttp.client import ClientSession
 from app.base.base_accessor import BaseAccessor
 from app.store.vk_api.dataclasses import Update, Message, UpdateObject
 from app.store.vk_api.poller import Poller
+from app.stock.models import User
 
 if typing.TYPE_CHECKING:
     from app.web.app import Application
@@ -85,19 +86,51 @@ class VkApiAccessor(BaseAccessor):
             raw_updates = data.get("updates", [])
             updates = []
             for update in raw_updates:
+                peer_id = update["object"].get("peer_id", None)
                 updates.append(
                     Update(
                         type=update["type"],
                         object=UpdateObject(
-                            id=update["object"]["message"]["id"],
-                            peer_id=update["object"]["message"]["peer_id"],
-                            body=update["object"]["message"]["text"],
-                            action=update["object"]["message"].get("action", {}),
+                            id=update["object"].get("message", {}).get("id"),
+                            peer_id=peer_id
+                            if peer_id
+                            else update["object"].get("message", {}).get("peer_id"),
+                            body=update["object"].get("message", {}).get("text"),
+                            action=update["object"]
+                            .get("message", {})
+                            .get("action", {}),
+                            payload=update["object"].get("payload", {}),
                         ),
                     )
                 )
             return updates
             # await self.app.store.bots_manager.handle_updates(updates)
+
+    async def get_conversation_members(self, peer_id):
+        async with self.session.get(
+            self._build_query(
+                API_PATH,
+                "messages.getConversationMembers",
+                params={
+                    "peer_id": peer_id,
+                    "group_id": str(self.app.config.bot.group_id),
+                    "access_token": self.app.config.bot.token,
+                },
+            )
+        ) as resp:
+            if resp.status == 200:
+                data = await resp.json()
+                users = []
+                if not data.get("error", False):
+                    for profile in data['response'].get("profiles"):
+                        print(profile)
+                        users.append(
+                            User(
+                                vk_id=profile.get("id"),
+                                user_name=profile.get("first_name"),
+                            )
+                        )
+                return users
 
     async def send_message(self, message: Message) -> None:
         query = self._build_query(
@@ -112,7 +145,6 @@ class VkApiAccessor(BaseAccessor):
                 "keyboard": message.keyboard,
             },
         )
-        print(query)
         async with self.session.get(query) as resp:
             data = await resp.json()
             self.logger.info(data)
