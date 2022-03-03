@@ -9,9 +9,9 @@ from app.store.bot.keyboards import GREETING, EXCHANGE, make_sell_dash, make_buy
 if typing.TYPE_CHECKING:
     from app.web.app import Application
 
-test_portfolio = [
-    Stock(symbol=s, cost=10, description="It's a stock") for s in ["AAPL", "SBR", "TSL"]
-]
+# test_portfolio = [
+# Stock(symbol=s, cost=10, description="It's a stock") for s in ["AAPL", "SBR", "TSL"]
+# ]
 
 
 class BotManager:
@@ -48,13 +48,13 @@ class BotManager:
                         text="Для покупки доступны",
                     )
 
-    async def start(self, peer_id):
+    async def start(self, peer_id: int):
         players = await self.app.store.vk_api.get_conversation_members(peer_id)
         await self.app.store.exchange.create_game(players, peer_id)
         await self.send_keyboard(peer_id, text="Выберите действие")
         self.logger.info(players)
 
-    async def send_keyboard(self, peer_id, keyboard=EXCHANGE, text=" "):
+    async def send_keyboard(self, peer_id: int, keyboard=EXCHANGE, text=" "):
         await self.app.store.vk_api.send_message(
             Message(
                 peer_id=peer_id,
