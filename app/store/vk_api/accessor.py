@@ -6,6 +6,7 @@ from aiohttp import TCPConnector
 from aiohttp.client import ClientSession
 
 from app.base.base_accessor import BaseAccessor
+from app.store.bot.dataclassess import VkUser
 from app.store.vk_api.dataclasses import Update, Message, UpdateObject
 from app.store.vk_api.poller import Poller
 from app.stock.models import User
@@ -124,9 +125,8 @@ class VkApiAccessor(BaseAccessor):
                 users = []
                 if not data.get("error", False):
                     for profile in data["response"].get("profiles"):
-                        print(profile)
                         users.append(
-                            User(
+                            VkUser(
                                 vk_id=profile.get("id"),
                                 user_name=profile.get("first_name"),
                             )
