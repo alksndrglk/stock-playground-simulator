@@ -1,5 +1,5 @@
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from dataclasses import dataclass
+from typing import Dict, Set, List, Optional
 
 from app.store.database.gino import db
 from gino.dialects.asyncpg import JSONB
@@ -7,15 +7,14 @@ from gino.dialects.asyncpg import JSONB
 
 @dataclass
 class User:
+    id: Optional[int]
     vk_id: int
     user_name: str
-    id: Optional[int] = None
-    games: Optional[set] = field(default_factory=set)
+    games: Set[int]
 
 
 class UserModel(db.Model):
-
-    __tablename__ = "user"
+    __tablename__ = "player"
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, unique=True, nullable=False)
@@ -67,7 +66,7 @@ class GameModel(db.Model):
     @users.setter
     def add_users(self, user: UserModel):
         self._users.append(user)
-        user.games.add(self)
+        user.games.add(self.id)
 
     def to_dct(self) -> Game:
         return Game(users=self.users, chat_id=self.chat_id, state=self.state)
@@ -77,35 +76,40 @@ class GameXUser(db.Model):
     __tablename__ = "games_x_users"
 
     game_id = db.Column(db.Integer, db.ForeignKey("game.id"))
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    user_id = db.Column(db.Integer, db.ForeignKey("player.id"))
 
 
 @dataclass
 class Stock:
+    id: Optional[int]
     symbol: str
     description: str
     cost: float
-    id: Optional[int] = None
-    game_id: Optional[int] = None
+    game_id: Optional[int]
 
 
-class StockModel(db.Model):
-    __tablename__ = "stock"
+def model(table):
+    class Base:
+        __tablename__ = table
 
-    id = db.Column(db.Integer, primary_key=True, index=True)
-    symbol = db.Column(db.String, unique=True, index=True)
-    description = db.Column(db.String, nullable=False)
-    cost = db.Column(db.Float, nullable=False)
+        id = db.Column(db.Integer, primary_key=True, index=True)
+        symbol = db.Column(db.String, unique=True, index=True)
+        description = db.Column(db.String, nullable=False)
+        cost = db.Column(db.Float, nullable=False)
 
+    return Base
+
+
+class StockModel(db.Model, model("stock")):
     def to_dct(self) -> Stock:
         return Stock(**self.to_dict())
 
 
-class GameStockModel(StockModel):
-    __tablename__ = "stock_in_game"
-
+class GameStockModel(db.Model, model("stock_in_game")):
     game_id = db.Column(db.Integer, db.ForeignKey("game.id"))
 
+    def to_dct(self) -> Stock:
+        return Stock(**self.to_dict())
 
 @dataclass
 class StockMarketEvent:
@@ -115,7 +119,7 @@ class StockMarketEvent:
 
 
 class StockMarketEventModel(db.Model):
-    __tablename__ = "market_event"
+    __tablename__ = "market_events"
 
     id = db.Column(db.Integer, primary_key=True)
     message = db.Column(db.String, nullable=False)
@@ -135,10 +139,10 @@ class BrokerageAccount:
 
 
 class BrokerageAccountModel(db.Model):
-    __tablename__ = "brokerage_account"
+    __tablename__ = "brokerage_accounts"
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("player.id"), nullable=False)
     game_id = db.Column(db.Integer, db.ForeignKey("game.id"), nullable=False)
     points = db.Column(db.Integer)
     portfolio = db.Column(JSONB, server_default="{}")
