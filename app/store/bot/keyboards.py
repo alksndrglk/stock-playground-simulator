@@ -3,7 +3,8 @@ from app.stock.models import Stock
 
 GREETING = json.dumps(
     {
-        "inline": True,
+        "inline": False,
+        "one_time": True,
         "buttons": [
             [
                 {
@@ -21,7 +22,8 @@ GREETING = json.dumps(
 
 EXCHANGE = json.dumps(
     {
-        "inline": True,
+        "inline": False,
+        "one_time": True,
         "buttons": [
             [
                 {
@@ -59,7 +61,8 @@ def make_button(verb, symbol, cost, amount=0):
 def make_buy_dash(stocks: list[Stock]):
     return json.dumps(
         {
-            "inline": True,
+            "inline": False,
+            "one_time": True,
             "buttons": [
                 [make_button("buy", stock.symbol, stock.cost) for stock in stocks]
             ],
