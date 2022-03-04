@@ -41,7 +41,7 @@ class ExchangeAccessor(BaseAccessor):
             )
             .all()
         )
-        val = [
+        return [
             Game(
                 [
                     User(
@@ -57,7 +57,6 @@ class ExchangeAccessor(BaseAccessor):
             )
             for g in game_info
         ]
-        print(val)
 
     async def create_game(self, players: List[VkUser], peer_id: int):
         async with db.transaction():
