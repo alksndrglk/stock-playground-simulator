@@ -10,8 +10,7 @@ class User:
     id: Optional[int]
     vk_id: int
     user_name: str
-    games: Set[int]
-
+    portfolio : dict
 
 class UserModel(db.Model):
     __tablename__ = "player"
@@ -21,12 +20,22 @@ class UserModel(db.Model):
     user_name = db.Column(db.String, nullable=False)
     created_at = db.Column(db.DateTime(), server_default="now()")
 
-    def __init__(self):
+    def __init__(self, **kw):
+        super().__init__(**kw)
         self._games = set()
+        self._portfolio = None
 
     @property
     def games(self):
         return self._games
+
+    @property
+    def portfolio(self):
+        return self._portfolio
+
+    @portfolio.setter
+    def portfolio(self, value):
+        self._portfolio = value
 
     def to_dct(self) -> User:
         return User(
@@ -93,7 +102,7 @@ def model(table):
         __tablename__ = table
 
         id = db.Column(db.Integer, primary_key=True, index=True)
-        symbol = db.Column(db.String, unique=True, index=True)
+        symbol = db.Column(db.String, unique=True, index=True, nullable=False)
         description = db.Column(db.String, nullable=False)
         cost = db.Column(db.Float, nullable=False)
 
@@ -110,6 +119,7 @@ class GameStockModel(db.Model, model("stock_in_game")):
 
     def to_dct(self) -> Stock:
         return Stock(**self.to_dict())
+
 
 @dataclass
 class StockMarketEvent:
