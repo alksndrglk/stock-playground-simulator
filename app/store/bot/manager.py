@@ -35,6 +35,7 @@ class BotManager:
                 payload = update.object.payload.get("command")
                 if payload == "start":
                     await self.start(update.object.peer_id)
+                    # await self.app.store.exchange.get_game(update.object.peer_id)
                 if payload == "sell":
                     await self.send_keyboard(
                         update.object.peer_id,

@@ -23,4 +23,4 @@ class Message:
 @dataclass
 class VkUser:
     vk_id: int
-    user_name: int
+    user_name: str
