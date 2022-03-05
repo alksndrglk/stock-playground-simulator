@@ -6,6 +6,7 @@ from app.stock.models import (
     Game,
     GameModel,
     GameXUser,
+    Stock,
     User,
     UserModel,
     GameStockModel,
@@ -21,6 +22,7 @@ class ExchangeAccessor(BaseAccessor):
         game_info = (
             await GameModel.outerjoin(GameXUser, GameModel.id == GameXUser.game_id)
             .outerjoin(UserModel, UserModel.id == GameXUser.user_id)
+            .outerjoin(GameStockModel, GameStockModel.game_id == GameModel.id)
             .outerjoin(
                 BrokerageAccountModel,
                 (
@@ -36,27 +38,29 @@ class ExchangeAccessor(BaseAccessor):
                         portfolio=BrokerageAccountModel.distinct(
                             BrokerageAccountModel.id
                         )
-                    )
+                    ),
+                    add_stocks=GameStockModel.distinct(GameStockModel.id),
                 )
             )
             .all()
         )
         return [
             Game(
-                [
+                users=[
                     User(
                         id=u.id,
                         vk_id=u.user_id,
                         user_name=u.user_name,
-                        portfolio=u.portfolio.to_dct(),
+                        brokerage_account=u.portfolio.to_dct(),
                     )
                     for u in g.users
                 ],
+                stocks=[s.to_dct() for s in g.stocks],
                 chat_id=g.chat_id,
                 state=g.state,
             )
             for g in game_info
-        ]
+        ][0]
 
     async def create_game(self, players: List[VkUser], peer_id: int):
         async with db.transaction():
@@ -117,4 +121,3 @@ class ExchangeAccessor(BaseAccessor):
                 for stock in stocks
             ]
         )
-
