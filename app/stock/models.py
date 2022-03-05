@@ -10,7 +10,7 @@ class User:
     id: Optional[int]
     vk_id: int
     user_name: str
-    portfolio : dict
+    brokerage_account : dict
 
 class UserModel(db.Model):
     __tablename__ = "player"
@@ -42,7 +42,7 @@ class UserModel(db.Model):
             id=self.id,
             vk_id=self.user_id,
             user_name=self.user_name,
-            games=self._games,
+            brokerage_account=self._portfolio.to_dct(),
         )
 
 
