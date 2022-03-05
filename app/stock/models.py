@@ -1,8 +1,12 @@
 from dataclasses import dataclass
 from typing import Dict, Set, List, Optional
 
+from sqlalchemy.util.langhelpers import symbol
+
 from app.store.database.gino import db
 from gino.dialects.asyncpg import JSONB
+
+from app.store.bot.errors import SymbolNotInPortfolio, OperationIsUnavailable
 
 
 @dataclass
@@ -10,7 +14,8 @@ class User:
     id: Optional[int]
     vk_id: int
     user_name: str
-    brokerage_account : dict
+    brokerage_account: dict
+
 
 class UserModel(db.Model):
     __tablename__ = "player"
@@ -47,10 +52,18 @@ class UserModel(db.Model):
 
 
 @dataclass
+class Stock:
+    symbol: str
+    description: str
+    cost: float
+
+
+@dataclass
 class Game:
     users: List[User]
     chat_id: int
     state: dict
+    stocks: List[Stock]
 
 
 class GameModel(db.Model):
@@ -67,6 +80,15 @@ class GameModel(db.Model):
     def __init__(self, **kw):
         super().__init__(**kw)
         self._users = []
+        self._stocks_in_game = []
+
+    @property
+    def stocks(self):
+        return self._stocks_in_game
+
+    @stocks.setter
+    def add_stocks(self, stock: "StockModel"):
+        self._stocks_in_game.append(stock)
 
     @property
     def users(self):
@@ -78,7 +100,12 @@ class GameModel(db.Model):
         user.games.add(self.id)
 
     def to_dct(self) -> Game:
-        return Game(users=self.users, chat_id=self.chat_id, state=self.state)
+        return Game(
+            users=self.users,
+            chat_id=self.chat_id,
+            state=self.state,
+            stocks=self.stocks,
+        )
 
 
 class GameXUser(db.Model):
@@ -86,15 +113,6 @@ class GameXUser(db.Model):
 
     game_id = db.Column(db.Integer, db.ForeignKey("game.id"))
     user_id = db.Column(db.Integer, db.ForeignKey("player.id"))
-
-
-@dataclass
-class Stock:
-    id: Optional[int]
-    symbol: str
-    description: str
-    cost: float
-    game_id: Optional[int]
 
 
 def model(table):
@@ -111,14 +129,14 @@ def model(table):
 
 class StockModel(db.Model, model("stock")):
     def to_dct(self) -> Stock:
-        return Stock(**self.to_dict())
+        return Stock(symbol=self.symbol, description=self.description, cost=self.cost)
 
 
 class GameStockModel(db.Model, model("stock_in_game")):
     game_id = db.Column(db.Integer, db.ForeignKey("game.id"))
 
     def to_dct(self) -> Stock:
-        return Stock(**self.to_dict())
+        return Stock(symbol=self.symbol, description=self.description, cost=self.cost)
 
 
 @dataclass
@@ -146,6 +164,25 @@ class BrokerageAccount:
     game_id: int
     points: float
     portfolio: Dict[str, int]
+
+    def sell(self, symbol, quantity, cost):
+        if symbol not in self.portfolio:
+            raise SymbolNotInPortfolio
+        if quantity > self.portfolio[symbol]:
+            raise OperationIsUnavailable
+
+        self.portfolio[symbol] -= quantity
+        if self.portfolio[symbol] == 0:
+            del self.portfolio[symbol]
+        self.points += quantity * cost
+        return self
+
+    def buy(self, symbol, quantity, cost):
+        if (quantity * cost) > self.points:
+            raise OperationIsUnavailable
+        self.portfolio[symbol] = self.portfolio.get(symbol, 0) + quantity
+        self.points -= quantity * cost
+        return self
 
 
 class BrokerageAccountModel(db.Model):
