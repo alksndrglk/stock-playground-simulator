@@ -1,13 +1,17 @@
 from collections import namedtuple
 import typing
 from logging import getLogger
-from app.stock.models import Stock
+from app.stock.models import Game, Stock
 from app.store.bot.const import RULES_AND_GREET, add_to_chat_event
 
-from app.store.vk_api.dataclasses import Update, Message
+from app.store.vk_api.dataclasses import Update, Message, UpdateObject
 from app.store.bot.keyboards import GREETING, EXCHANGE, make_sell_dash, make_buy_dash
-from app.store.bot.conditions import RequestVerb
-from app.store.bot.errors import RequestDoesNotMeetTheStandart
+from app.store.bot.conditions import VERB_TO_FUNCTION, RequestVerb
+from app.store.bot.errors import (
+    OperationIsUnavailable,
+    RequestDoesNotMeetTheStandart,
+    SymbolNotInPortfolio,
+)
 
 if typing.TYPE_CHECKING:
     from app.web.app import Application
@@ -31,7 +35,7 @@ class BotManager:
             command, symbol, quantity = msg.split()
 
             for verb in RequestVerb:
-                if command == verb:
+                if command == verb.value:
                     break
             else:
                 self.logger("Unnown command in message")
@@ -55,12 +59,18 @@ class BotManager:
                     await self.start(update.object.peer_id)
             elif update.type == "message_new":
                 try:
-                    client_message = self.parse_message(update.object.body)
-                    game = await self.app.store.exchange.get_game(update.object.peer_id)
-                    await self.message_processing(client_message, game)
-                except RequestDoesNotMeetTheStandart:
-                    "Надо ли тут что-то отвечать?"
-                    pass
+                    await self.message_processing(update.object)
+                except (
+                    OperationIsUnavailable,
+                    RequestDoesNotMeetTheStandart,
+                    SymbolNotInPortfolio,
+                ) as e:
+                    await self.app.store.vk_api.send_message(
+                        Message(
+                            peer_id=update.object.peer_id,
+                            text=str(e),
+                        )
+                    )
 
     async def start(self, peer_id: int):
         players = await self.app.store.vk_api.get_conversation_members(peer_id)
@@ -75,5 +85,23 @@ class BotManager:
             )
         )
 
-    async def message_processing(self, client_message, game):
-        pass
+    async def message_processing(self, upd: UpdateObject):
+        try:
+            client_message = self.parse_message(upd.body)
+        except RequestDoesNotMeetTheStandart:
+            raise
+
+        game: Game = await self.app.store.exchange.get_game(upd.peer_id)
+        brokerage_account = next(
+            filter(lambda u: u.vk_id == upd.user_id, game.users)
+        ).brokerage_account
+        try:
+            new_brokerage_acc = getattr(
+                brokerage_account, VERB_TO_FUNCTION[client_message.verb]
+            )(client_message.symbol, client_message.quantity)
+        except OperationIsUnavailable:
+            raise
+        except SymbolNotInPortfolio:
+            raise
+
+        await self.app.store.exchange.update_brokerage_acc(new_brokerage_acc)

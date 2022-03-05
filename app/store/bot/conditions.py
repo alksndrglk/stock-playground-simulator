@@ -2,5 +2,8 @@ from enum import Enum
 
 
 class RequestVerb(Enum):
-    sell = "/sell"
-    buy = "/buy"
+    SELL = "/sell"
+    BUY = "/buy"
+
+
+VERB_TO_FUNCTION = {RequestVerb.SELL: "sell", RequestVerb.BUY: "buy"}
