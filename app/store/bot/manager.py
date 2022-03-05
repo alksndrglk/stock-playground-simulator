@@ -26,7 +26,7 @@ class BotManager:
         self.bot = None
         self.logger = getLogger("handler")
 
-    def parse_message(msg: str):
+    def parse_message(self, msg: str):
         try:
             command, symbol, quantity = msg.split()
 
