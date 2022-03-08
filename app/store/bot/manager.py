@@ -45,40 +45,39 @@ class BotManager:
 
     async def handle_updates(self, updates: list[Update]):
         for update in updates:
+            keyboard = STATIC
+            text = ""
             if update.object.action == add_to_chat_event:
-                await self.send_keyboard(
-                    update.object.peer_id,
-                    keyboard=GREETING,
-                    text=RULES_AND_GREET,
-                )
+                keyboard, text = GREETING, RULES_AND_GREET
             elif update.type == "message_event":
                 payload = update.object.payload.get("command")
                 if payload == "start":
-                    stocks = await self.start(update.object.peer_id)
-                    await self.send_market_situtaion(stocks, update.object.peer_id)
+                    text = await self.start(update.object.peer_id)
                 if payload == "finished_bidding":
-                    await self.user_finished_bidding(update.object)
+                    keyboard, text = await self.user_finished_bidding(update.object)
                 if payload == "end":
-                    await self.finish_game(update.object.peer_id)
+                    text = await self.finish_game(update.object.peer_id)
+                    keyboard = END
             elif update.type == "message_new":
                 try:
-                    await self.message_processing(update.object)
+                    text = await self.message_processing(update.object)
                 except (
                     OperationIsUnavailable,
                     RequestDoesNotMeetTheStandart,
                     SymbolNotInPortfolio,
                 ) as e:
-                    await self.app.store.vk_api.send_message(
-                        Message(
-                            peer_id=update.object.peer_id,
-                            text=str(e),
-                        )
-                    )
+                    text = str(e)
+            if text:
+                await self.send_keyboard(
+                    update.object.peer_id,
+                    keyboard=keyboard,
+                    text=text,
+                )
 
     async def start(self, peer_id: int):
         players = await self.app.store.vk_api.get_conversation_members(peer_id)
         stocks = await self.app.store.exchange.create_game(players, peer_id)
-        return stocks
+        return self.market_situtaion(stocks)
 
     async def send_keyboard(self, peer_id: int, keyboard=STATIC, text=" "):
         await self.app.store.vk_api.send_message(
@@ -106,7 +105,7 @@ class BotManager:
                 game.stocks[client_message.symbol].cost,
             )
             await self.app.store.exchange.update_brokerage_acc(new_brokerage_acc)
-            await self.send_keyboard(upd.peer_id, text="Операция выполнена")
+            return "Операция выполнена"
         except OperationIsUnavailable:
             raise
         except SymbolNotInPortfolio:
@@ -128,15 +127,11 @@ class BotManager:
                 game.round_info["round_number"] += 1
                 event = await self.market_events()
                 new_stocks = await self.recalculate_stocks(game, event)
-                msg += await self.send_market_situtaion(new_stocks, event=event)
-                msg += await self.brokerage_accounts_info(game.users, new_stocks)
-            await self.send_keyboard(
-                upd.peer_id,
-                keyboard=END if game.round_info["round_number"] >= 11 else STATIC,
-                text=msg,
-            )
+                msg += self.market_situtaion(new_stocks, event=event)
+                msg += self.brokerage_accounts_info(game.users, new_stocks)
             game.round_info["finished_bidding"] = []
         await self.app.store.exchange.update_game(game)
+        return (END if game.round_info["round_number"] >= 11 else STATIC, msg)
 
     async def finish_game(self, peer_id: int, game: Game):
         pass
@@ -146,12 +141,12 @@ class BotManager:
 
     async def recalculate_stocks(
         self, game: Game, event: StockMarketEvent
-    ) -> Optional[Dict[str, Stock]]:
+    ) -> Dict[str, Stock]:
         return await self.app.store.exchange.update_stocks(
             game.id, game.stocks, event.diff
         )
 
-    async def brokerage_accounts_info(
+    def brokerage_accounts_info(
         self, users: Dict[int, User], stocks: Dict[str, Stock]
     ) -> str:
         msg = "\n\nСостояние инвестиционных портфелей:\n"
@@ -164,16 +159,13 @@ class BotManager:
             )
         return msg
 
-    async def send_market_situtaion(
+    def market_situtaion(
         self,
         stocks: Dict[str, Stock],
-        peer_id: int = None,
         event: StockMarketEvent = None,
         text: str = "Цены на акции:\n",
-    ) -> Optional[str]:
+    ) -> str:
         if event:
             text = str(event) + text
         text += "\n".join(str(s) for _, s in stocks.items())
-        if not peer_id:
-            return text
-        await self.send_keyboard(peer_id, text=text)
+        return text
