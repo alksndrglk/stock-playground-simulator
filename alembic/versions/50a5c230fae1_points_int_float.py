@@ -1,8 +1,8 @@
-"""first
+"""Points int -> float
 
-Revision ID: 9da6aaede675
-Revises: 1eb5e55024b3
-Create Date: 2022-03-03 16:24:26.113061
+Revision ID: 50a5c230fae1
+Revises: 4f275edde571
+Create Date: 2022-03-07 17:07:32.701627
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '9da6aaede675'
-down_revision = '1eb5e55024b3'
+revision = '50a5c230fae1'
+down_revision = '4f275edde571'
 branch_labels = None
 depends_on = None
 
