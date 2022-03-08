@@ -1,20 +1,26 @@
-from typing import List
+from datetime import datetime
+from operator import index
+from typing import List, Dict
 from app.base.base_accessor import BaseAccessor
-
+from sqlalchemy import and_
 from app.stock.models import (
     BrokerageAccountModel,
+    BrokerageAccount,
     Game,
     GameModel,
     GameXUser,
     Stock,
+    StockMarketEvent,
+    StockMarketEventModel,
     User,
     UserModel,
     GameStockModel,
     StockModel,
 )
-from app.store.database.gino import db
 from app.store.bot.dataclassess import VkUser
+from app.web.utils import safety
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.sql.expression import func
 
 
 class ExchangeAccessor(BaseAccessor):
@@ -31,7 +37,7 @@ class ExchangeAccessor(BaseAccessor):
                 ),
             )
             .select()
-            .where(GameModel.id == peer_id)
+            .where(GameModel.chat_id == peer_id)
             .gino.load(
                 GameModel.distinct(GameModel.id).load(
                     add_users=UserModel.distinct(UserModel.id).load(
@@ -46,45 +52,49 @@ class ExchangeAccessor(BaseAccessor):
         )
         return [
             Game(
-                users=[
-                    User(
-                        id=u.id,
-                        vk_id=u.user_id,
-                        user_name=u.user_name,
-                        brokerage_account=u.portfolio.to_dct(),
-                    )
-                    for u in g.users
-                ],
-                stocks=[s.to_dct() for s in g.stocks],
+                id=g.id,
+                users=g.users,
+                stocks=g.stocks,
                 chat_id=g.chat_id,
                 state=g.state,
+                round_info=g.round_info,
             )
             for g in game_info
         ][0]
 
+    @safety
     async def create_game(self, players: List[VkUser], peer_id: int):
-        async with db.transaction():
-            game = await GameModel(chat_id=peer_id).create()
-            await self.user_registration(players, game.id)
-            await self.stocks_initialization(game.id)
+        game = await GameModel(
+            chat_id=peer_id, round_number=1, finished_bidding=[]
+        ).create()
+        users = await self.user_registration(players, game.id)
+        await self.connect_user_game(users, game.id)
+        await self.portfolio_creation(users, game.id)
+        return await self.stocks_initialization(game.id)
 
-    async def user_registration(self, players: List[VkUser], game_id: int):
+    async def user_registration(
+        self, players: List[VkUser], game_id: int
+    ) -> List[User]:
+        qu = insert(UserModel).values(
+            [
+                {
+                    "user_id": player.vk_id,
+                    "user_name": player.user_name,
+                }
+                for player in players
+            ]
+        )
+
         users = await (
-            insert(UserModel)
-            .values(
-                [
-                    {
-                        "user_id": player.vk_id,
-                        "user_name": player.user_name,
-                    }
-                    for player in players
-                ]
+            qu.on_conflict_do_update(
+                index_elements=[UserModel.user_id], set_={"created_at": datetime.now()}
             )
-            .on_conflict_do_nothing()
             .returning(*UserModel)
             .gino.all()
         )
+        return [User(id=u.id, user_id=u.user_id, user_name=u.user_name) for u in users]
 
+    async def connect_user_game(self, users: List[User], game_id: int):
         await GameXUser.insert().gino.all(
             [
                 {
@@ -94,7 +104,6 @@ class ExchangeAccessor(BaseAccessor):
                 for u in users
             ]
         )
-        await self.portfolio_creation(users, game_id)
 
     async def portfolio_creation(self, users: list, game_id: int):
         await insert(BrokerageAccountModel).values(
@@ -108,16 +117,54 @@ class ExchangeAccessor(BaseAccessor):
             ]
         ).on_conflict_do_nothing().gino.all()
 
-    async def stocks_initialization(self, game_id: int):
+    async def stocks_initialization(self, game_id: int) -> Dict[str, Stock]:
         stocks = await StockModel.query.gino.all()
-        await GameStockModel.insert().gino.all(
-            [
-                {
-                    "symbol": stock.symbol,
-                    "description": stock.description,
-                    "cost": stock.cost,
-                    "game_id": game_id,
-                }
-                for stock in stocks
-            ]
+        stocks_in_game = (
+            await insert(GameStockModel)
+            .values(
+                [
+                    {
+                        "symbol": stock.symbol,
+                        "description": stock.description,
+                        "cost": stock.cost,
+                        "game_id": game_id,
+                    }
+                    for stock in stocks
+                ]
+            )
+            .on_conflict_do_nothing()
+            .returning(*GameStockModel)
+            .gino.all()
         )
+        return {s.symbol: Stock(**s) for s in stocks_in_game}
+
+    async def update_brokerage_acc(self, brokerage_account: BrokerageAccount):
+        await BrokerageAccountModel.update.values(
+            portfolio=brokerage_account.portfolio, points=brokerage_account.points
+        ).where(
+            and_(
+                BrokerageAccountModel.user_id == brokerage_account.user_id,
+                BrokerageAccountModel.game_id == brokerage_account.game_id,
+            )
+        ).gino.status()
+
+    async def update_game(self, game: Game):
+        await GameModel.update.values(
+            round_info=game.round_info, state=game.state
+        ).where(GameModel.id == game.id).gino.status()
+
+    async def update_stocks(
+        self, game_id: int, stocks: Dict[str, Stock], diff: int
+    ) -> Dict[str, Stock]:
+        new_stocks = (
+            await GameStockModel.update.returning(*GameStockModel)
+            .where(GameStockModel.game_id == game_id)
+            .values({"cost": s.cost * (100 + diff) / 100 for _, s in stocks.items()})
+            .gino.all()
+        )
+        return {s.symbol: s.to_dct() for s in new_stocks}
+
+    async def get_event(self) -> StockMarketEvent:
+        return (
+            await StockMarketEventModel.query.order_by(func.random()).gino.first()
+        ).to_dct()
