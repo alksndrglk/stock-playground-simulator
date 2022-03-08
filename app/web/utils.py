@@ -3,6 +3,16 @@ from typing import Any, Optional
 from aiohttp.web import json_response as aiohttp_json_response
 from aiohttp.web_response import Response
 
+from app.store.database.gino import db
+
+
+def safety(func):
+    async def wrapper(*ag, **kw):
+        async with db.transaction():
+            return await func(*ag, **kw)
+
+    return wrapper
+
 
 def json_response(data: Any = None, status: str = "ok") -> Response:
     if data is None:
