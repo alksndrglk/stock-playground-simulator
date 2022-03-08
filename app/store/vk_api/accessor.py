@@ -1,6 +1,6 @@
 import random
 import typing
-from typing import Optional
+from typing import Optional, List
 
 from aiohttp import TCPConnector
 from aiohttp.client import ClientSession
@@ -77,7 +77,7 @@ class VkApiAccessor(BaseAccessor):
                     "act": "a_check",
                     "key": self.key,
                     "ts": self.ts,
-                    "wait": 30,
+                    "wait": 25,
                 },
             )
         ) as resp:
@@ -88,6 +88,7 @@ class VkApiAccessor(BaseAccessor):
             updates = []
             for update in raw_updates:
                 peer_id = update["object"].get("peer_id", None)
+                user_id = update["object"].get("user_id", None)
                 updates.append(
                     Update(
                         type=update["type"],
@@ -96,7 +97,9 @@ class VkApiAccessor(BaseAccessor):
                             peer_id=peer_id
                             if peer_id
                             else update["object"].get("message", {}).get("peer_id"),
-                            user_id=update["object"].get("message", {}).get("from_id"),
+                            user_id=user_id
+                            if user_id
+                            else update["object"].get("message", {}).get("from_id"),
                             body=update["object"].get("message", {}).get("text"),
                             action=update["object"]
                             .get("message", {})
@@ -108,7 +111,7 @@ class VkApiAccessor(BaseAccessor):
             return updates
             # await self.app.store.bots_manager.handle_updates(updates)
 
-    async def get_conversation_members(self, peer_id):
+    async def get_conversation_members(self, peer_id) -> Optional[List[VkUser]]:
         async with self.session.get(
             self._build_query(
                 API_PATH,
