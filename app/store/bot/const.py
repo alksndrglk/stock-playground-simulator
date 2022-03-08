@@ -1,3 +1,5 @@
+from app.web.app import app
+
 RULES_AND_GREET = """
    Для корректной работы бота, дайте ему права Администратора в настройках.\n
    Управление осуществляется в сообщениях командами /sell и /buy.\n
@@ -7,6 +9,5 @@ RULES_AND_GREET = """
 
 add_to_chat_event = {
     "type": "chat_invite_user",
-    "member_id": -210570816,
+    "member_id": -app.config.bot.group_id,
 }
-

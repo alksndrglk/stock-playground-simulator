@@ -20,7 +20,7 @@ GREETING = json.dumps(
     }
 )
 
-EXCHANGE = json.dumps(
+STATIC = json.dumps(
     {
         "inline": False,
         "one_time": True,
@@ -29,58 +29,47 @@ EXCHANGE = json.dumps(
                 {
                     "action": {
                         "type": "callback",
-                        "payload": '{"command": "sell"}',
-                        "label": "Продать",
+                        "payload": '{"command": "finished_bidding"}',
+                        "label": "Закончить торги",
                     },
                     "color": "primary",
                 },
                 {
                     "action": {
                         "type": "callback",
-                        "payload": '{"command": "buy"}',
-                        "label": "Купить",
+                        "payload": '{"command": "end"}',
+                        "label": "СТОП",
                     },
-                    "color": "primary",
+                    "color": "negative",
                 },
             ]
         ],
     }
 )
 
-
-def make_button(verb, symbol, cost, amount=0):
-    return {
-        "action": {
-            "type": "callback",
-            "payload": f'{{"{verb} symbol":"{symbol} {amount}"}}',
-            "label": symbol,
-        },
+END = json.dumps(
+    {
+        "inline": False,
+        "one_time": True,
+        "buttons": [
+            [
+                {
+                    "action": {
+                        "type": "callback",
+                        "payload": '{"command": "show_state"}',
+                        "label": "Показать подробные результаты",
+                    },
+                    "color": "primary",
+                },
+                {
+                    "action": {
+                        "type": "callback",
+                        "payload": '{"command": "start"}',
+                        "label": "Играть Заново",
+                    },
+                    "color": "positive",
+                },
+            ]
+        ],
     }
-
-
-def make_buy_dash(stocks: list[Stock]):
-    return json.dumps(
-        {
-            "inline": False,
-            "one_time": True,
-            "buttons": [
-                [make_button("buy", stock.symbol, stock.cost) for stock in stocks]
-            ],
-        }
-    )
-
-
-def make_sell_dash(portfolio):
-    return json.dumps(
-        {
-            "inline": True,
-            "buttons": [
-                [
-                    {
-                        make_button("sell", stock.symbol, stock.cost, stock.amount)
-                        for stock in portfolio
-                    }
-                ]
-            ],
-        }
-    )
+)
