@@ -143,14 +143,14 @@ class BotManager:
         self, game: Game, event: StockMarketEvent
     ) -> Dict[str, Stock]:
         return await self.app.store.exchange.update_stocks(
-            game.id, game.stocks, event.diff
+            game.stocks, event.diff
         )
 
     def brokerage_accounts_info(
         self, users: Dict[int, User], stocks: Dict[str, Stock]
     ) -> str:
         msg = "\n\nСостояние инвестиционных портфелей:\n"
-        for _, u in users.items():
+        for u in users.values():
             fc = 0
             for k, v in u.brokerage_account.portfolio.items():
                 fc += v * stocks[k].cost
@@ -167,5 +167,5 @@ class BotManager:
     ) -> str:
         if event:
             text = str(event) + text
-        text += "\n".join(str(s) for _, s in stocks.items())
+        text += "\n".join(str(s) for s in stocks.values())
         return text

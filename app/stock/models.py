@@ -141,6 +141,7 @@ class GameModel(db.Model):
     round_number = db.IntegerProperty(prop_name="round_info")
     finished_bidding = db.ArrayProperty(prop_name="round_info")
     state = db.Column(JSONB, server_default="{}")
+    finished_at = db.Column(db.DateTime(), server_default=None)
 
     def __init__(self, **kw):
         super().__init__(**kw)
@@ -163,6 +164,17 @@ class GameModel(db.Model):
     def add_users(self, user: UserModel):
         self._users[user.user_id] = user.to_dct()
         user.games.add(self.id)
+
+    @classmethod
+    async def get_or_create(cls, peer_id: int) -> "GameModel":
+        game = await cls.query.where(
+            and_(cls.finished_at == None, cls.chat_id == peer_id)
+        ).gino.first()
+        if game is None:
+            return await cls.create(
+                chat_id=peer_id, round_number=1, finished_bidding=[]
+            )
+        return game
 
     def to_dct(self) -> Game:
         return Game(
@@ -187,7 +199,7 @@ def model(table):
         __tablename__ = table
 
         id = db.Column(db.Integer, primary_key=True)
-        symbol = db.Column(db.String, unique=True, index=True, nullable=False)
+        symbol = db.Column(db.String, index=True, nullable=False)
         description = db.Column(db.String, nullable=False)
         cost = db.Column(db.Float, nullable=False)
 
@@ -201,6 +213,7 @@ class StockModel(db.Model, model("stock")):
 
 class GameStockModel(db.Model, model("stock_in_game")):
     game_id = db.Column(db.Integer, db.ForeignKey("game.id", ondelete="CASCADE"))
+    _idx1 = db.UniqueConstraint('symbol', 'game_id', name='pk')
 
     def to_dct(self) -> Stock:
         return Stock(
@@ -227,7 +240,7 @@ class GameStockModel(db.Model, model("stock_in_game")):
 
         return (
             qs.on_conflict_do_update(
-                index_elements=[cls.symbol],
+                index_elements=[cls.game_id, cls.symbol],
                 set_={"cost": qs.excluded["cost"]},
             )
             .returning(GameStockModel.__table__)
