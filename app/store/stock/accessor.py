@@ -20,6 +20,7 @@ from app.stock.models import (
 from app.store.bot.dataclassess import VkUser
 from app.web.utils import safety
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy import bindparam
 from sqlalchemy.sql.expression import func
 
 
@@ -156,11 +157,21 @@ class ExchangeAccessor(BaseAccessor):
     async def update_stocks(
         self, game_id: int, stocks: Dict[str, Stock], diff: int
     ) -> Dict[str, Stock]:
-        new_stocks = (
-            await GameStockModel.update.returning(*GameStockModel)
-            .where(GameStockModel.game_id == game_id)
-            .values({"cost": s.cost * (100 + diff) / 100 for _, s in stocks.items()})
-            .gino.all()
+        new_stocks = await (
+            GameStockModel.update.where(
+                and_(
+                    GameStockModel.game_id == game_id,
+                    GameStockModel.symbol == bindparam("symbol"),
+                )
+            )
+            .values(
+                {
+                    "cost": GameStockModel.cost * (100 + diff) / 100,
+                    "symbol": bindparam("symbol"),
+                }
+            )
+            .returning(*GameStockModel)
+            .gino.all([s.__dict__ for s in stocks.values()])
         )
         return {s.symbol: s.to_dct() for s in new_stocks}
 
