@@ -65,9 +65,7 @@ class ExchangeAccessor(BaseAccessor):
 
     @safety
     async def create_game(self, players: List[VkUser], peer_id: int):
-        game = await GameModel(
-            chat_id=peer_id, round_number=1, finished_bidding=[]
-        ).create()
+        game = await GameModel().get_or_create(peer_id)
         users = await self.user_registration(players, game.id)
         await self.connect_user_game(users, game.id)
         await self.portfolio_creation(users, game.id)
@@ -155,9 +153,9 @@ class ExchangeAccessor(BaseAccessor):
         ).where(GameModel.id == game.id).gino.status()
 
     async def update_stocks(
-        self, game_id: int, stocks: Dict[str, Stock], diff: int
+        self, stocks: Dict[str, Stock], diff: int
     ) -> Dict[str, Stock]:
-        new_stocks = await (GameStockModel.bulk_upsert(stocks.values(), diff, game_id))
+        new_stocks = await (GameStockModel.bulk_upsert(stocks.values(), diff))
         return {s.symbol: Stock(**s) for s in new_stocks}
 
     async def get_event(self) -> StockMarketEvent:
