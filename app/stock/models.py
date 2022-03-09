@@ -148,7 +148,13 @@ class GameStockModel(db.Model, model("stock_in_game")):
     game_id = db.Column(db.Integer, db.ForeignKey("game.id", ondelete="CASCADE"))
 
     def to_dct(self) -> Stock:
-        return Stock(symbol=self.symbol, description=self.description, cost=self.cost)
+        return Stock(
+            id=self.id,
+            game_id=self.game_id,
+            symbol=self.symbol,
+            description=self.description,
+            cost=self.cost,
+        )
 
 
 @dataclass
