@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Dict, Set, List, Optional
 
-from sqlalchemy.util.langhelpers import symbol
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy import and_
 
 from app.store.database.gino import db
 from gino.dialects.asyncpg import JSONB
@@ -154,6 +155,31 @@ class GameStockModel(db.Model, model("stock_in_game")):
             symbol=self.symbol,
             description=self.description,
             cost=self.cost,
+        )
+
+    @classmethod
+    def bulk_upsert(cls, stocks, diff, game_id):
+        qs = insert(cls.__table__).values(
+            [
+                {
+                    "cost": s.cost * (100 + diff) / 100,
+                    "symbol": s.symbol,
+                    "game_id": s.game_id,
+                    "description": s.description,
+                }
+                for s in stocks
+            ]
+        )
+
+        return (
+            qs.on_conflict_do_update(
+                index_elements=[cls.symbol],
+                set_={
+                    "cost": qs.excluded["cost"]
+                },  # or even qs.excluded['some_column']
+            )
+            .returning(GameStockModel.__table__)
+            .gino.all()
         )
 
 
