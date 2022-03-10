@@ -1,4 +1,5 @@
 import asyncio
+from asyncio.queues import Queue
 from datetime import datetime
 from typing import TYPE_CHECKING, Dict, List, NamedTuple, Tuple, Union
 from logging import getLogger
@@ -57,8 +58,9 @@ class BotManager:
         except ValueError:
             raise RequestDoesNotMeetTheStandart
 
-    async def handle_updates(self, updates: list[Update]):
-        for update in updates:
+    async def handle_updates(self, queue: Queue):
+        while True:
+            update = await queue.get()
             keyboard = STATIC
             text = ""
             if update.object.action == add_to_chat_event:
