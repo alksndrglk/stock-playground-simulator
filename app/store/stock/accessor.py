@@ -31,8 +31,10 @@ class ExchangeAccessor(BaseAccessor):
             .outerjoin(
                 BrokerageAccountModel,
                 (
-                    BrokerageAccountModel.user_id == UserModel.id
-                    and BrokerageAccountModel.game_id == GameModel.id
+                    and_(
+                        BrokerageAccountModel.user_id == UserModel.id,
+                        BrokerageAccountModel.game_id == GameModel.id,
+                    )
                 ),
             )
             .select()
@@ -151,7 +153,7 @@ class ExchangeAccessor(BaseAccessor):
 
     async def update_game(self, game: Game):
         await GameModel.update.values(
-            round_info=game.round_info, state=game.state
+            round_info=game.round_info, state=game.state, finished_at=game.finished_at
         ).where(GameModel.id == game.id).gino.status()
 
     async def update_stocks(
