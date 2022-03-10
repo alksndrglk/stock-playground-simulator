@@ -1,5 +1,4 @@
 from datetime import datetime
-from operator import index
 from typing import List, Dict
 from app.base.base_accessor import BaseAccessor
 from sqlalchemy import and_
@@ -18,9 +17,8 @@ from app.stock.models import (
     StockModel,
 )
 from app.store.bot.dataclassess import VkUser
-from app.web.utils import safety
+from app.web.utils import secure_game_creation
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy import bindparam
 from sqlalchemy.sql.expression import func
 
 
@@ -38,7 +36,7 @@ class ExchangeAccessor(BaseAccessor):
                 ),
             )
             .select()
-            .where(GameModel.chat_id == peer_id)
+            .where(and_(GameModel.chat_id == peer_id, GameModel.finished_at == None))
             .gino.load(
                 GameModel.distinct(GameModel.id).load(
                     add_users=UserModel.distinct(UserModel.id).load(
@@ -51,19 +49,23 @@ class ExchangeAccessor(BaseAccessor):
             )
             .all()
         )
-        return [
-            Game(
-                id=g.id,
-                users=g.users,
-                stocks=g.stocks,
-                chat_id=g.chat_id,
-                state=g.state,
-                round_info=g.round_info,
-            )
-            for g in game_info
-        ][0]
+        return (
+            None
+            if not game_info
+            else [
+                Game(
+                    id=g.id,
+                    users=g.users,
+                    stocks=g.stocks,
+                    chat_id=g.chat_id,
+                    state=g.state,
+                    round_info=g.round_info,
+                )
+                for g in game_info
+            ][0]
+        )
 
-    @safety
+    @secure_game_creation
     async def create_game(self, players: List[VkUser], peer_id: int):
         game = await GameModel().get_or_create(peer_id)
         users = await self.user_registration(players, game.id)
