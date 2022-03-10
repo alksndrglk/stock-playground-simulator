@@ -98,12 +98,14 @@ class BotManager:
         game = await self.app.store.exchange.get_game(peer_id)
         if game.round_info["round_number"] <= 11:
             keyboard, text = await self.finish_round(game)
-            await self.send_keyboard(
-                peer_id,
-                keyboard=keyboard,
-                text=text,
+            await asyncio.gather(
+                self.send_keyboard(
+                    peer_id,
+                    keyboard=keyboard,
+                    text=text,
+                ),
+                self.app.store.exchange.update_game(game),
             )
-            await self.app.store.exchange.update_game(game)
 
     async def start(self, peer_id: int) -> str:
         players = await self.app.store.vk_api.get_conversation_members(peer_id)
@@ -164,12 +166,17 @@ class BotManager:
             new_stocks = await self.recalculate_stocks(game, event)
             msg += self.market_situtaion(new_stocks, event=event)
             msg += self.brokerage_accounts_info([*game.users.values()], new_stocks)
+            self._auto_tasks[game.chat_id].cancel()
+            self._auto_tasks[game.chat_id] = asyncio.create_task(
+                self.round_automation(game.chat_id)
+            )
         return STATIC, msg
 
     async def finish_game(self, game: Game, msg=FINAL_SENTENCE):
         game.finished_at = datetime.now()
         msg += self.brokerage_accounts_info([*game.users.values()], game.stocks)
         self._auto_tasks[game.chat_id].cancel()
+        del self._auto_tasks[game.chat_id]
         return END, msg
 
     async def market_events(self) -> StockMarketEvent:
@@ -178,11 +185,12 @@ class BotManager:
     async def recalculate_stocks(
         self, game: Game, event: StockMarketEvent
     ) -> Dict[str, Stock]:
-        return await self.app.store.exchange.update_stocks([*game.stocks.values()], event.diff)
+        return await self.app.store.exchange.update_stocks(
+            [*game.stocks.values()], event.diff
+        )
 
-    def brokerage_accounts_info(
-        self, users: List[User], stocks: Dict[str, Stock]
-    ) -> str:
+    @staticmethod
+    def brokerage_accounts_info(users: List[User], stocks: Dict[str, Stock]) -> str:
         msg = "\n\nСостояние инвестиционных портфелей:\n"
         for u in users:
             fc = 0
@@ -193,8 +201,8 @@ class BotManager:
             )
         return msg
 
+    @staticmethod
     def market_situtaion(
-        self,
         stocks: Dict[str, Stock],
         event: StockMarketEvent = None,
         text: str = "Цены на акции:\n",
