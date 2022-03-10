@@ -1,4 +1,6 @@
+ROUND_TIME = 60
 from app.web.app import app
+
 
 RULES_AND_GREET = """
    Для корректной работы бота, дайте ему права Администратора в настройках.\n
