@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 from typing import TYPE_CHECKING, Dict, NamedTuple, Tuple, Union
 from logging import getLogger
 from app.stock.models import (
@@ -7,7 +8,12 @@ from app.stock.models import (
     StockMarketEvent,
     User,
 )
-from app.store.bot.const import ROUND_TIME, RULES_AND_GREET, add_to_chat_event
+from app.store.bot.const import (
+    ROUND_TIME,
+    RULES_AND_GREET,
+    add_to_chat_event,
+    FINAL_SENTENCE,
+)
 
 from app.web.utils import periodic
 from app.store.vk_api.dataclasses import Update, Message, UpdateObject
@@ -34,6 +40,7 @@ class BotManager:
         self.app = app
         self.bot = None
         self.logger = getLogger("handler")
+        self._auto_tasks = {}
 
     def parse_message(self, msg: str):
         try:
@@ -64,7 +71,7 @@ class BotManager:
                 if not game:
                     if payload == "start":
                         text = await self.start(update.object.peer_id)
-                        asyncio.create_task(
+                        self._auto_tasks[update.object.peer_id] = asyncio.create_task(
                             self.round_automation(update.object.peer_id)
                         )
                 elif update.type == "message_event":
@@ -85,9 +92,9 @@ class BotManager:
                 )
 
     @periodic(ROUND_TIME)
-    async def round_automation(self, peer_id):
+    async def round_automation(self, peer_id: int):
         game = await self.app.store.exchange.get_game(peer_id)
-        if game.round_info["round_number"] < 11:
+        if game.round_info["round_number"] <= 11:
             keyboard, text = await self.finish_round(game)
             await self.send_keyboard(
                 peer_id,
@@ -156,10 +163,11 @@ class BotManager:
             msg += self.brokerage_accounts_info(game.users, new_stocks)
         return STATIC, msg
 
-    async def finish_game(self, game: Game):
-        text = ""
-        keyboard = END
-        return keyboard, text
+    async def finish_game(self, game: Game, msg=FINAL_SENTENCE):
+        game.finished_at = datetime.now()
+        msg += self.brokerage_accounts_info(game.users, game.stocks)
+        self._auto_tasks[game.chat_id].cancel()
+        return END, msg
 
     async def market_events(self) -> StockMarketEvent:
         return await self.app.store.exchange.get_event()

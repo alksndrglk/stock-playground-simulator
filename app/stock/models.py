@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
-from typing import Dict, Set, List, Optional
+from datetime import datetime
+from typing import Dict, Set, List, Optional, Union
 
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy import and_
@@ -129,6 +130,7 @@ class Game:
     state: dict
     round_info: dict
     stocks: Dict[str, Stock]
+    finished_at: Union[None, datetime] = None
 
 
 class GameModel(db.Model):
@@ -213,7 +215,7 @@ class StockModel(db.Model, model("stock")):
 
 class GameStockModel(db.Model, model("stock_in_game")):
     game_id = db.Column(db.Integer, db.ForeignKey("game.id", ondelete="CASCADE"))
-    _idx1 = db.UniqueConstraint('symbol', 'game_id', name='pk')
+    _idx1 = db.UniqueConstraint("symbol", "game_id", name="pk")
 
     def to_dct(self) -> Stock:
         return Stock(
