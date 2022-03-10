@@ -1,6 +1,6 @@
 import asyncio
 from datetime import datetime
-from typing import TYPE_CHECKING, Dict, NamedTuple, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, NamedTuple, Tuple, Union
 from logging import getLogger
 from app.stock.models import (
     Game,
@@ -120,6 +120,7 @@ class BotManager:
     async def message_processing(self, game: Game, upd: UpdateObject):
         try:
             client_message = self.parse_message(upd.body)
+            symbol_cost = game.stocks[client_message.symbol].cost
         except RequestDoesNotMeetTheStandart as e:
             return str(e)
 
@@ -130,7 +131,7 @@ class BotManager:
             )(
                 client_message.symbol,
                 client_message.quantity,
-                game.stocks[client_message.symbol].cost,
+                symbol_cost,
             )
             await self.app.store.exchange.update_brokerage_acc(new_brokerage_acc)
             return "Операция выполнена"
@@ -160,12 +161,12 @@ class BotManager:
             event = await self.market_events()
             new_stocks = await self.recalculate_stocks(game, event)
             msg += self.market_situtaion(new_stocks, event=event)
-            msg += self.brokerage_accounts_info(game.users, new_stocks)
+            msg += self.brokerage_accounts_info([*game.users.values()], new_stocks)
         return STATIC, msg
 
     async def finish_game(self, game: Game, msg=FINAL_SENTENCE):
         game.finished_at = datetime.now()
-        msg += self.brokerage_accounts_info(game.users, game.stocks)
+        msg += self.brokerage_accounts_info([*game.users.values()], game.stocks)
         self._auto_tasks[game.chat_id].cancel()
         return END, msg
 
@@ -175,18 +176,18 @@ class BotManager:
     async def recalculate_stocks(
         self, game: Game, event: StockMarketEvent
     ) -> Dict[str, Stock]:
-        return await self.app.store.exchange.update_stocks(game.stocks, event.diff)
+        return await self.app.store.exchange.update_stocks([*game.stocks.values()], event.diff)
 
     def brokerage_accounts_info(
-        self, users: Dict[int, User], stocks: Dict[str, Stock]
+        self, users: List[User], stocks: Dict[str, Stock]
     ) -> str:
         msg = "\n\nСостояние инвестиционных портфелей:\n"
-        for u in users.values():
+        for u in users:
             fc = 0
             for k, v in u.brokerage_account.portfolio.items():
                 fc += v * stocks[k].cost
             msg += (
-                f"{u.user_name}({u.user_id}) {str(u)}: стоимость портфеля {fc:.2f}$\n"
+                f"{u.user_name}({u.user_id})\n{str(u)}\nCтоимость портфеля: {fc:.2f}$\n"
             )
         return msg
 
