@@ -157,9 +157,9 @@ class ExchangeAccessor(BaseAccessor):
         ).where(GameModel.id == game.id).gino.status()
 
     async def update_stocks(
-        self, stocks: Dict[str, Stock], diff: int
+        self, stocks: List[Stock], diff: int
     ) -> Dict[str, Stock]:
-        new_stocks = await (GameStockModel.bulk_upsert(stocks.values(), diff))
+        new_stocks = await (GameStockModel.bulk_upsert(stocks, diff))
         return {s.symbol: Stock(**s) for s in new_stocks}
 
     async def get_event(self) -> StockMarketEvent:
