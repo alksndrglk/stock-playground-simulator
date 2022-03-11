@@ -1,6 +1,7 @@
 from marshmallow import Schema, fields
 from marshmallow.validate import Range
 
+
 class StockSchema(Schema):
     id = fields.Int(required=False)
     symbol = fields.Str(required=True)
@@ -11,7 +12,7 @@ class StockSchema(Schema):
 class EventSchema(Schema):
     id = fields.Int(required=False)
     message = fields.Str(required=True)
-    diff = fields.Float(required=True,validate=Range(min=0, max=10)
+    diff = fields.Float(required=True, validate=Range(min=0.01, max=1.99))
 
 
 class StockListSchema(Schema):
