@@ -3,6 +3,7 @@ from asyncio.queues import Queue
 from datetime import datetime
 from typing import TYPE_CHECKING, Dict, List, NamedTuple, Tuple, Union
 from logging import getLogger
+
 from app.stock.models import (
     Game,
     Stock,
@@ -24,6 +25,7 @@ from app.store.bot.errors import (
     OperationIsUnavailable,
     RequestDoesNotMeetTheStandart,
     SymbolNotInPortfolio,
+    SymbolNotInGame,
 )
 
 if TYPE_CHECKING:
@@ -54,7 +56,7 @@ class BotManager:
                 self.logger("Unnown command in message")
                 raise RequestDoesNotMeetTheStandart
 
-            return ClientMessage(verb, symbol, int(quantity))
+            return ClientMessage(verb, symbol.upper(), int(quantity))
         except ValueError:
             raise RequestDoesNotMeetTheStandart
 
@@ -124,8 +126,10 @@ class BotManager:
     async def message_processing(self, game: Game, upd: UpdateObject):
         try:
             client_message = self.parse_message(upd.body)
-            symbol_cost = game.stocks[client_message.symbol].cost
-        except RequestDoesNotMeetTheStandart as e:
+            symbol = game.stocks.get(client_message.symbol)
+            if not symbol:
+                raise SymbolNotInGame
+        except (RequestDoesNotMeetTheStandart, SymbolNotInGame) as e:
             return str(e)
 
         brokerage_account = game.users[upd.user_id].brokerage_account
@@ -135,7 +139,7 @@ class BotManager:
             )(
                 client_message.symbol,
                 client_message.quantity,
-                symbol_cost,
+                symbol.cost,
             )
             await self.app.store.exchange.update_brokerage_acc(new_brokerage_acc)
             return "Операция выполнена"
@@ -175,8 +179,9 @@ class BotManager:
     async def finish_game(self, game: Game, msg=FINAL_SENTENCE):
         game.finished_at = datetime.now()
         msg += self.brokerage_accounts_info([*game.users.values()], game.stocks)
-        self._auto_tasks[game.chat_id].cancel()
-        del self._auto_tasks[game.chat_id]
+        if self._auto_tasks.get(game.chat_id):
+            self._auto_tasks[game.chat_id].cancel()
+            del self._auto_tasks[game.chat_id]
         return END, msg
 
     async def market_events(self) -> StockMarketEvent:
