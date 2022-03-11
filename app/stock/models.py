@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, Set, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy import and_
