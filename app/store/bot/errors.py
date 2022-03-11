@@ -10,6 +10,12 @@ class SymbolNotInPortfolio(Exception):
         super().__init__(self.message)
 
 
+class SymbolNotInGame(Exception):
+    def __init__(self, message="Такая акция не играется на бирже."):
+        self.message = message
+        super().__init__(self.message)
+
+
 class OperationIsUnavailable(Exception):
     def __init__(self, message="Не достаточно средств. Операция недоступна."):
         self.message = message
