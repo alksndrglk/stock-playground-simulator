@@ -1,5 +1,6 @@
 from datetime import datetime
-from typing import List, Dict
+from typing import List, Dict, Optional
+
 from app.base.base_accessor import BaseAccessor
 from sqlalchemy import and_
 from app.stock.models import (
@@ -156,13 +157,35 @@ class ExchangeAccessor(BaseAccessor):
             round_info=game.round_info, state=game.state, finished_at=game.finished_at
         ).where(GameModel.id == game.id).gino.status()
 
-    async def update_stocks(
-        self, stocks: List[Stock], diff: int
-    ) -> Dict[str, Stock]:
+    async def update_stocks(self, stocks: List[Stock], diff: int) -> Dict[str, Stock]:
         new_stocks = await (GameStockModel.bulk_upsert(stocks, diff))
         return {s.symbol: Stock(**s) for s in new_stocks}
 
     async def get_event(self) -> StockMarketEvent:
         return (
             await StockMarketEventModel.query.order_by(func.random()).gino.first()
+        ).to_dct()
+
+    async def get_stock_by_symbol(self, symbol: str) -> Optional[Stock]:
+        stock = await StockModel.query.where(StockModel.symbol == symbol).gino.first()
+        if not stock:
+            return None
+        return stock.to_dct()
+
+    async def create_stock(self, symbol: str, description: str, cost: float) -> Stock:
+        return (
+            await StockModel().create(symbol=symbol, description=description, cost=cost)
+        ).to_dct()
+
+    async def get_event_by_message(self, message: str) -> Optional[StockMarketEvent]:
+        event = await StockMarketEventModel.query.where(
+            StockMarketEventModel.message == message
+        ).gino.first()
+        if not event:
+            return None
+        return event.to_dct()
+
+    async def create_event(self, message: str, diff: float) -> StockMarketEvent:
+        return (
+            await StockMarketEventModel().create(message=message, diff=diff)
         ).to_dct()
