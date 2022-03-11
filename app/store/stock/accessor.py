@@ -189,3 +189,11 @@ class ExchangeAccessor(BaseAccessor):
         return (
             await StockMarketEventModel().create(message=message, diff=diff)
         ).to_dct()
+
+    async def list_stocks(self) -> List[Stock]:
+        stocks = await StockModel.query.gino.all()
+        return [s.to_dct() for s in stocks]
+
+    async def list_events(self) -> List[StockMarketEvent]:
+        events = await StockMarketEventModel.query.gino.all()
+        return [e.to_dct() for e in events]
