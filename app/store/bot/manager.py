@@ -60,40 +60,38 @@ class BotManager:
         except ValueError:
             raise RequestDoesNotMeetTheStandart
 
-    async def handle_updates(self, queue: Queue):
-        while True:
-            update = await queue.get()
-            keyboard = STATIC
-            text = ""
-            if update.object.action == add_to_chat_event:
-                keyboard, text = GREETING, RULES_AND_GREET
-            else:
-                game: Union[Game, None] = await self.app.store.exchange.get_game(
-                    update.object.peer_id
-                )
-                payload = update.object.payload.get("command")
-                if not game:
-                    if payload == "start":
-                        text = await self.start(update.object.peer_id)
-                        self._auto_tasks[update.object.peer_id] = asyncio.create_task(
-                            self.round_automation(update.object.peer_id)
-                        )
-                elif update.type == "message_event":
-                    if payload == "finished_bidding":
-                        keyboard, text = await self.user_finished_bidding(
-                            game, update.object
-                        )
-                    if payload == "end":
-                        keyboard, text = await self.finish_game(game)
-                    await self.app.store.exchange.update_game(game)
-                elif update.type == "message_new":
-                    text = await self.message_processing(game, update.object)
-            if text:
-                await self.send_keyboard(
-                    update.object.peer_id,
-                    keyboard=keyboard,
-                    text=text,
-                )
+    async def handle_updates(self, update: Update):
+        keyboard = STATIC
+        text = ""
+        if update.object.action == add_to_chat_event:
+            keyboard, text = GREETING, RULES_AND_GREET
+        else:
+            game: Union[Game, None] = await self.app.store.exchange.get_game(
+                update.object.peer_id
+            )
+            payload = update.object.payload.get("command")
+            if not game:
+                if payload == "start":
+                    text = await self.start(update.object.peer_id)
+                    self._auto_tasks[update.object.peer_id] = asyncio.create_task(
+                        self.round_automation(update.object.peer_id)
+                    )
+            elif update.type == "message_event":
+                if payload == "finished_bidding":
+                    keyboard, text = await self.user_finished_bidding(
+                        game, update.object
+                    )
+                if payload == "end":
+                    keyboard, text = await self.finish_game(game)
+                await self.app.store.exchange.update_game(game)
+            elif update.type == "message_new":
+                text = await self.message_processing(game, update.object)
+        if text:
+            await self.send_keyboard(
+                update.object.peer_id,
+                keyboard=keyboard,
+                text=text,
+            )
 
     @periodic(ROUND_TIME)
     async def round_automation(self, peer_id: int):
