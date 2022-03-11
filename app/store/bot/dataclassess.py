@@ -18,3 +18,9 @@ class Update:
 class Message:
     user_id: int
     text: str
+
+
+@dataclass
+class VkUser:
+    vk_id: int
+    user_name: str
