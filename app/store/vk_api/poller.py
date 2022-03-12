@@ -14,7 +14,7 @@ class Poller:
         self.roll_task: Optional[Task] = None
         self._stop_event = asyncio.Event()
         self._chat_queues: Dict[int, Queue] = {}
-        self._workers : List[Task] = []
+        self._workers: List[Task] = []
         self._concurrent_workers = 0
 
     async def start(self):
@@ -41,5 +41,7 @@ class Poller:
                 if u.object.peer_id not in self._chat_queues:
                     queue = Queue()
                     self._chat_queues[u.object.peer_id] = queue
-                    self._workers.append(asyncio.create_task(self._worker(queue)))
+                    self._workers.append(
+                        asyncio.create_task(self._worker(queue))
+                    )
                 self._chat_queues[u.object.peer_id].put_nowait(u)

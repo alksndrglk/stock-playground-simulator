@@ -27,6 +27,7 @@ class EventListSchema(Schema):
 class ChatIdSchema(Schema):
     chat_id = fields.Int(required=False)
 
+
 class GameModelSchema(Schema):
     id = fields.Int(required=False)
     chat_id = fields.Int(required=True)
@@ -36,6 +37,7 @@ class GameModelSchema(Schema):
 
     class Meta:
         unknown = EXCLUDE
+
 
 class AllGamesSchema(Schema):
     games = fields.Nested(GameModelSchema, many=True)

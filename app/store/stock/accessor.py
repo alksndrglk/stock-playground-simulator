@@ -223,7 +223,9 @@ class ExchangeAccessor(BaseAccessor):
         events = await StockMarketEventModel.query.gino.all()
         return [e.to_dct() for e in events]
 
-    async def get_stats(self, chat_id: Optional[int]) -> Union[None, Game, List[Game]]:
+    async def get_stats(
+        self, chat_id: Optional[int]
+    ) -> Union[None, Game, List[Game]]:
         if chat_id:
             game = (
                 await GameModel.query.where(GameModel.chat_id == chat_id)
