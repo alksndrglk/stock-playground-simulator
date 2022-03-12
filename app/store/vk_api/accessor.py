@@ -96,11 +96,17 @@ class VkApiAccessor(BaseAccessor):
                             id=update["object"].get("message", {}).get("id"),
                             peer_id=peer_id
                             if peer_id
-                            else update["object"].get("message", {}).get("peer_id"),
+                            else update["object"]
+                            .get("message", {})
+                            .get("peer_id"),
                             user_id=user_id
                             if user_id
-                            else update["object"].get("message", {}).get("from_id"),
-                            body=update["object"].get("message", {}).get("text"),
+                            else update["object"]
+                            .get("message", {})
+                            .get("from_id"),
+                            body=update["object"]
+                            .get("message", {})
+                            .get("text"),
                             action=update["object"]
                             .get("message", {})
                             .get("action", {}),

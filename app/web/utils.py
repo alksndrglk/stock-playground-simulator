@@ -12,8 +12,11 @@ def periodic(time):
         async def wrapper(*args, **kwargs):
             await asyncio.sleep(time)
             asyncio.create_task(fcn(*args, **kwargs))
+
         return wrapper
+
     return scheduler
+
 
 def secure_game_creation(func):
     async def wrapper(*ag, **kw):

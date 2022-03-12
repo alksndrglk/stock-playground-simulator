@@ -10,7 +10,7 @@ class UpdateObject:
     user_id: int
     body: str
     action: str
-    payload : dict = field(default_factory=dict)
+    payload: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -24,4 +24,4 @@ class Message:
     # user_id: int
     peer_id: int
     text: str
-    keyboard : dict['str', Union[bool,list]] = field(default_factory=dict)
+    keyboard: dict["str", Union[bool, list]] = field(default_factory=dict)
