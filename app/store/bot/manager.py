@@ -73,9 +73,16 @@ class BotManager:
             if not game:
                 if payload == "start":
                     text = await self.start(update.object.peer_id)
-                    self._auto_tasks[update.object.peer_id] = asyncio.create_task(
+                    self._auto_tasks[
+                        update.object.peer_id
+                    ] = asyncio.create_task(
                         self.round_automation(update.object.peer_id)
                     )
+                if payload == "show_state":
+                    finished_game = await self.app.store.exchange.get_stats(
+                        update.object.peer_id
+                    )
+                    keyboard, text = self.show_state(finished_game)
             elif update.type == "message_event":
                 if payload == "finished_bidding":
                     keyboard, text = await self.user_finished_bidding(
@@ -139,7 +146,9 @@ class BotManager:
                 client_message.quantity,
                 symbol.cost,
             )
-            await self.app.store.exchange.update_brokerage_acc(new_brokerage_acc)
+            await self.app.store.exchange.update_brokerage_acc(
+                new_brokerage_acc
+            )
             return "Операция выполнена"
         except OperationIsUnavailable as e:
             return str(e)
@@ -167,7 +176,9 @@ class BotManager:
             event = await self.market_events()
             new_stocks = await self.recalculate_stocks(game, event)
             msg += self.market_situtaion(new_stocks, event=event)
-            msg += self.brokerage_accounts_info([*game.users.values()], new_stocks)
+            msg += self.brokerage_accounts_info(
+                [*game.users.values()], new_stocks
+            )
             self._auto_tasks[game.chat_id].cancel()
             self._auto_tasks[game.chat_id] = asyncio.create_task(
                 self.round_automation(game.chat_id)
@@ -193,15 +204,24 @@ class BotManager:
         )
 
     @staticmethod
-    def brokerage_accounts_info(users: List[User], stocks: Dict[str, Stock]) -> str:
-        msg = "\n\nСостояние инвестиционных портфелей:\n"
+    def show_state(game: Game):
+        msg = "Полная статистика по раундам:\n"
+        for r, s in game.state.items():
+            msg += f"{r}й раунд\n"
+            for u, b in s.items():
+                msg += f"Пользователь {u} -- {b}\n"
+        return END, msg
+
+    @staticmethod
+    def brokerage_accounts_info(
+        users: List[User], stocks: Dict[str, Stock]
+    ) -> str:
+        msg = "\n\nСостояние инвестиционных портфелей:\n\n"
         for u in users:
             fc = 0
             for k, v in u.brokerage_account.portfolio.items():
                 fc += v * stocks[k].cost
-            msg += (
-                f"{u.user_name}({u.user_id})\n{str(u)}\nCтоимость портфеля: {fc:.2f}$\n"
-            )
+            msg += f"{u.user_name}({u.user_id})\n{str(u)}\nCтоимость портфеля: {fc:.2f}$\n\n"
         return msg
 
     @staticmethod

@@ -10,9 +10,8 @@ from app.store.database.gino import db
 def periodic(time):
     def scheduler(fcn):
         async def wrapper(*args, **kwargs):
-            while True:
-                await asyncio.sleep(time)
-                asyncio.create_task(fcn(*args, **kwargs))
+            await asyncio.sleep(time)
+            asyncio.create_task(fcn(*args, **kwargs))
         return wrapper
     return scheduler
 
