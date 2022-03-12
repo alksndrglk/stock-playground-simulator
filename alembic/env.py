@@ -1,5 +1,6 @@
 import os
 import yaml
+import pathlib
 
 from logging.config import fileConfig
 
@@ -13,7 +14,14 @@ from app.store.database.gino import db
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
-with open(os.environ["CONFIGPATH"]) as config:
+BASE_DIR = pathlib.Path(__file__).parent.parent
+
+if os.environ.get("CONFIGPATH"):
+    config_path = BASE_DIR / os.environ["CONFIGPATH"]
+else:
+    config_path = BASE_DIR / "config" / "config.yaml"
+
+with open(config_path) as config:
     raw_config = yaml.safe_load(config)
     app_config = DatabaseConfig(**raw_config.get("database", {}))
 
@@ -94,7 +102,9 @@ def run_migrations_online():
     )
 
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(
+            connection=connection, target_metadata=target_metadata
+        )
 
         with context.begin_transaction():
             context.run_migrations()
