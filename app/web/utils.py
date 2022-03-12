@@ -11,7 +11,7 @@ def periodic(time):
     def scheduler(fcn):
         async def wrapper(*args, **kwargs):
             while True:
-                await asyncio.sleep(10)
+                await asyncio.sleep(time)
                 asyncio.create_task(fcn(*args, **kwargs))
         return wrapper
     return scheduler
