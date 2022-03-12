@@ -5,7 +5,9 @@ from app.web.mixins import AuthRequiredMixin
 from app.web.utils import json_response
 
 from app.stock.schemes import (
+    AllGamesSchema,
     ChatIdSchema,
+    GameModelSchema,
     StockSchema,
     StockListSchema,
     EventSchema,
@@ -22,7 +24,9 @@ class StockAddView(AuthRequiredMixin, View):
         if existing_stock:
             raise HTTPConflict
         stock = await self.store.exchange.create_stock(
-            symbol=symbol, description=self.data["description"], cost=self.data["cost"]
+            symbol=symbol,
+            description=self.data["description"],
+            cost=self.data["cost"],
         )
         return json_response(data=StockSchema().dump(stock))
 
@@ -58,7 +62,8 @@ class EventListView(AuthRequiredMixin, View):
 class GameStatisticView(AuthRequiredMixin, View):
     @querystring_schema(ChatIdSchema)
     async def get(self):
-        statistic = await self.store.exchange.get_stats(
-            chat_id=self.data.get("chat_id")
-        )
-        return json_response(data=statistic)
+        chat_id = self.request.get("querystring", {}).get("chat_id")
+        game = await self.store.exchange.get_stats(chat_id=chat_id)
+        if chat_id:
+            return json_response(data=GameModelSchema().dump(game))
+        return json_response(data=AllGamesSchema().dump({"games": game}))

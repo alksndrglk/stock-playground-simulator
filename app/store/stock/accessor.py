@@ -26,7 +26,9 @@ from sqlalchemy.sql.expression import func
 class ExchangeAccessor(BaseAccessor):
     async def get_game(self, peer_id: int):
         game_info = (
-            await GameModel.outerjoin(GameXUser, GameModel.id == GameXUser.game_id)
+            await GameModel.outerjoin(
+                GameXUser, GameModel.id == GameXUser.game_id
+            )
             .outerjoin(UserModel, UserModel.id == GameXUser.user_id)
             .outerjoin(GameStockModel, GameStockModel.game_id == GameModel.id)
             .outerjoin(
@@ -39,7 +41,11 @@ class ExchangeAccessor(BaseAccessor):
                 ),
             )
             .select()
-            .where(and_(GameModel.chat_id == peer_id, GameModel.finished_at == None))
+            .where(
+                and_(
+                    GameModel.chat_id == peer_id, GameModel.finished_at == None
+                )
+            )
             .gino.load(
                 GameModel.distinct(GameModel.id).load(
                     add_users=UserModel.distinct(UserModel.id).load(
@@ -91,12 +97,16 @@ class ExchangeAccessor(BaseAccessor):
 
         users = await (
             qu.on_conflict_do_update(
-                index_elements=[UserModel.user_id], set_={"created_at": datetime.now()}
+                index_elements=[UserModel.user_id],
+                set_={"created_at": datetime.now()},
             )
             .returning(*UserModel)
             .gino.all()
         )
-        return [User(id=u.id, user_id=u.user_id, user_name=u.user_name) for u in users]
+        return [
+            User(id=u.id, user_id=u.user_id, user_name=u.user_name)
+            for u in users
+        ]
 
     async def connect_user_game(self, users: List[User], game_id: int):
         await GameXUser.insert().gino.all(
@@ -144,7 +154,8 @@ class ExchangeAccessor(BaseAccessor):
 
     async def update_brokerage_acc(self, brokerage_account: BrokerageAccount):
         await BrokerageAccountModel.update.values(
-            portfolio=brokerage_account.portfolio, points=brokerage_account.points
+            portfolio=brokerage_account.portfolio,
+            points=brokerage_account.points,
         ).where(
             and_(
                 BrokerageAccountModel.user_id == brokerage_account.user_id,
@@ -154,30 +165,44 @@ class ExchangeAccessor(BaseAccessor):
 
     async def update_game(self, game: Game):
         await GameModel.update.values(
-            round_info=game.round_info, state=game.state, finished_at=game.finished_at
+            round_info=game.round_info,
+            state=game.state,
+            finished_at=game.finished_at,
         ).where(GameModel.id == game.id).gino.status()
 
-    async def update_stocks(self, stocks: List[Stock], diff: int) -> Dict[str, Stock]:
+    async def update_stocks(
+        self, stocks: List[Stock], diff: int
+    ) -> Dict[str, Stock]:
         new_stocks = await (GameStockModel.bulk_upsert(stocks, diff))
         return {s.symbol: Stock(**s) for s in new_stocks}
 
     async def get_event(self) -> StockMarketEvent:
         return (
-            await StockMarketEventModel.query.order_by(func.random()).gino.first()
+            await StockMarketEventModel.query.order_by(
+                func.random()
+            ).gino.first()
         ).to_dct()
 
     async def get_stock_by_symbol(self, symbol: str) -> Optional[Stock]:
-        stock = await StockModel.query.where(StockModel.symbol == symbol).gino.first()
+        stock = await StockModel.query.where(
+            StockModel.symbol == symbol
+        ).gino.first()
         if not stock:
             return None
         return stock.to_dct()
 
-    async def create_stock(self, symbol: str, description: str, cost: float) -> Stock:
+    async def create_stock(
+        self, symbol: str, description: str, cost: float
+    ) -> Stock:
         return (
-            await StockModel().create(symbol=symbol, description=description, cost=cost)
+            await StockModel().create(
+                symbol=symbol, description=description, cost=cost
+            )
         ).to_dct()
 
-    async def get_event_by_message(self, message: str) -> Optional[StockMarketEvent]:
+    async def get_event_by_message(
+        self, message: str
+    ) -> Optional[StockMarketEvent]:
         event = await StockMarketEventModel.query.where(
             StockMarketEventModel.message == message
         ).gino.first()
@@ -197,3 +222,17 @@ class ExchangeAccessor(BaseAccessor):
     async def list_events(self) -> List[StockMarketEvent]:
         events = await StockMarketEventModel.query.gino.all()
         return [e.to_dct() for e in events]
+
+    async def get_stats(self, chat_id: Optional[int]):
+        if chat_id:
+            game = (
+                await GameModel.query.where(GameModel.chat_id == chat_id)
+                .order_by(GameModel.finished_at)
+                .gino.first()
+            )
+            if not game:
+                return None
+            return game.to_dct()
+
+        games = await GameModel.query.gino.all()
+        return [g.to_dct() for g in games]
