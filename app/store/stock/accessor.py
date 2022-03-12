@@ -195,7 +195,7 @@ class ExchangeAccessor(BaseAccessor):
         self, symbol: str, description: str, cost: float
     ) -> Stock:
         return (
-            await StockModel().create(
+            await StockModel.create(
                 symbol=symbol, description=description, cost=cost
             )
         ).to_dct()
@@ -212,7 +212,7 @@ class ExchangeAccessor(BaseAccessor):
 
     async def create_event(self, message: str, diff: float) -> StockMarketEvent:
         return (
-            await StockMarketEventModel().create(message=message, diff=diff)
+            await StockMarketEventModel.create(message=message, diff=diff)
         ).to_dct()
 
     async def list_stocks(self) -> List[Stock]:
