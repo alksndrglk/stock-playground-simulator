@@ -19,7 +19,7 @@ BASE_DIR = pathlib.Path(__file__).parent.parent
 if os.environ.get("CONFIGPATH"):
     config_path = BASE_DIR / os.environ["CONFIGPATH"]
 else:
-    config_path = BASE_DIR / "config" / "config.yml"
+    config_path = BASE_DIR / "config" / "config.yaml"
 
 with open(config_path) as config:
     raw_config = yaml.safe_load(config)
