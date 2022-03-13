@@ -20,6 +20,7 @@ from app.store.bot.const import (
     chart,
     rong,
     check,
+    minus,
 )
 from app.web.utils import periodic
 from app.store.vk_api.dataclasses import Update, Message, UpdateObject
@@ -224,12 +225,13 @@ class BotManager:
     def brokerage_accounts_info(
         users: List[User], stocks: Dict[str, Stock]
     ) -> str:
-        msg = f"\n\nСостояние инвестиционных портфелей{case.decode()} :\n\n"
+        msg = f"\nСостояние инвестиционных портфелей{case.decode()} :\n\n"
         for u in users:
             fc = 0
             for k, v in u.brokerage_account.portfolio.items():
                 fc += v * stocks[k].cost
-            msg += f"{u.user_name}({u.user_id})\n{str(u)}\nCтоимость портфеля: {fc:.2f}{dollar.decode()}\n\n"
+            msg += f"{u.user_name}({u.user_id})\n{str(u)}\nCтоимость портфеля: {fc:.2f}{dollar.decode()}"
+            msg += f"\n{minus.decode()*5}\nИтого:{fc+u.brokerage_account.points:.2f}{dollar.decode()}\n\n"
         return msg
 
     @staticmethod
