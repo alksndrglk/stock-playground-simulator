@@ -1,5 +1,5 @@
-session:
-  key: $SESSION_SECRET
+server:
+  port: $PORT
 admin:
   email: $ADMIN_EMAIL
   password: $ADMIN_PASS
