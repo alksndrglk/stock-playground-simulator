@@ -44,3 +44,4 @@ jobs:
         heroku container:login
         heroku container:push -a investor-sandbox worker
         heroku container:release -a investor-sandbox worker
+        heroku ps:scale worker=1
