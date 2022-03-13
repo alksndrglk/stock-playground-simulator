@@ -21,7 +21,7 @@ class BrokerageAccount:
 
     def __str__(self) -> str:
         p = "\n".join([f"{k}:{v}" for k, v in self.portfolio.items()])
-        return f"На счете: {self.points:.2f}$\nAкции:\n{p}"
+        return f"На счете: {self.points:.2f}💲\nAкции:\n{p}"
 
     def sell(
         self, symbol: str, quantity: int, cost: float
