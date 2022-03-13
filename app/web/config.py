@@ -59,7 +59,7 @@ def setup_config(app: "Application", config_path: str):
         ),
         bot=BotConfig(
             token=raw_config["bot"]["token"],
-            group_id=raw_config["bot"]["group_id"],
+            group_id=int(raw_config["bot"]["group_id"]),
         ),
         database=DatabaseConfig(**raw_config["database"]),
     )
