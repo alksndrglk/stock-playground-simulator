@@ -1,4 +1,4 @@
-from aiohttp_apispec import request_schema, response_schema
+from aiohttp_apispec import request_schema, response_schema, docs
 from aiohttp_session import new_session
 
 from app.admin.schemes import AdminSchema
@@ -9,6 +9,7 @@ from app.web.utils import json_response
 
 
 class AdminLoginView(View):
+    @docs(tags=["Admin"], description="Admin Login View")
     @request_schema(AdminSchema)
     @response_schema(AdminSchema, 200)
     async def post(self):
@@ -24,6 +25,7 @@ class AdminLoginView(View):
 
 
 class AdminCurrentView(View):
+    @docs(tags=["Admin"], description="Admin Current View")
     @response_schema(AdminSchema, 200)
     async def get(self):
         if self.request.admin:
