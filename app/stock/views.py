@@ -1,5 +1,5 @@
 from aiohttp.web_exceptions import HTTPConflict
-from aiohttp_apispec import request_schema, response_schema, querystring_schema
+from aiohttp_apispec import request_schema, response_schema, querystring_schema, docs
 from app.web.app import View
 from app.web.mixins import AuthRequiredMixin
 from app.web.utils import json_response
@@ -16,6 +16,7 @@ from app.stock.schemes import (
 
 
 class StockAddView(AuthRequiredMixin, View):
+    @docs(tags=["Stock"],description="Stock Add View")
     @request_schema(StockSchema)
     @response_schema(StockSchema)
     async def post(self):
@@ -32,6 +33,7 @@ class StockAddView(AuthRequiredMixin, View):
 
 
 class StockListView(AuthRequiredMixin, View):
+    @docs(tags=["Stock"],description="List Stocks View")
     @response_schema(StockListSchema)
     async def get(self):
         stocks = await self.store.exchange.list_stocks()
@@ -39,6 +41,7 @@ class StockListView(AuthRequiredMixin, View):
 
 
 class EventAddView(AuthRequiredMixin, View):
+    @docs(tags=["Event"],description="Event Add View")
     @request_schema(EventSchema)
     @response_schema(EventSchema)
     async def post(self):
@@ -53,6 +56,7 @@ class EventAddView(AuthRequiredMixin, View):
 
 
 class EventListView(AuthRequiredMixin, View):
+    @docs(tags=["Event"], description="List Events View")
     @response_schema(EventListSchema)
     async def get(self):
         events = await self.store.exchange.list_events()
@@ -60,6 +64,7 @@ class EventListView(AuthRequiredMixin, View):
 
 
 class GameStatisticView(AuthRequiredMixin, View):
+    @docs(tags=["Game"],description="Game Statistic View")
     @querystring_schema(ChatIdSchema)
     async def get(self):
         chat_id = self.request.get("querystring", {}).get("chat_id")
