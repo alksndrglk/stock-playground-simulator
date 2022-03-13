@@ -18,6 +18,7 @@ class Admin:
     def from_session(cls, session: Optional[dict]) -> Optional["Admin"]:
         return cls(id=session["admin"]["id"], email=session["admin"]["email"])
 
+
 class AdminModel(db.Model):
     __tablename__ = "admins"
 

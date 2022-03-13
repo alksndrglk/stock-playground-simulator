@@ -1,4 +1,5 @@
 from marshmallow import Schema, fields
+from marshmallow.utils import EXCLUDE
 from marshmallow.validate import Range
 
 
@@ -24,4 +25,19 @@ class EventListSchema(Schema):
 
 
 class ChatIdSchema(Schema):
-    chat_id = fields.Int()
+    chat_id = fields.Int(required=False)
+
+
+class GameModelSchema(Schema):
+    id = fields.Int(required=False)
+    chat_id = fields.Int(required=True)
+    users = fields.Dict(required=True)
+    state = fields.Dict(required=True)
+    stocks = fields.Dict(required=True)
+
+    class Meta:
+        unknown = EXCLUDE
+
+
+class AllGamesSchema(Schema):
+    games = fields.Nested(GameModelSchema, many=True)
