@@ -1,4 +1,5 @@
 import random
+import json
 import typing
 from typing import Optional, List
 
@@ -151,7 +152,7 @@ class VkApiAccessor(BaseAccessor):
                 # "user_id": message.user_id,
                 "random_id": random.randint(1, 2 ** 32),
                 "group_id": str(self.app.config.bot.group_id),
-                "message": message.text,
+                "message": json.loads(json.dumps(message.text)),
                 "access_token": self.app.config.bot.token,
                 "keyboard": message.keyboard,
             },
