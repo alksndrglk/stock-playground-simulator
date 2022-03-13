@@ -1,5 +1,6 @@
 #!/bin/bash
-cat config/prod_config.yml | envsubst > config/config.yaml
+sourse .env
+envsubst < config/prod_config.yml > config/config.yaml
 
 alembic upgrade head
 python main.py
