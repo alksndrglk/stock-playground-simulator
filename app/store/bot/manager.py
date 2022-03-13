@@ -52,7 +52,7 @@ class BotManager:
             command, symbol, quantity = msg.split()
 
             for verb in RequestVerb:
-                if command == verb.value:
+                if command.lower() == verb.value:
                     break
             else:
                 self.logger("Unnown command in message")
@@ -210,7 +210,7 @@ class BotManager:
     def show_state(game: Game):
         msg = "Полная статистика по раундам:\n"
         for r, s in game.state.items():
-            msg += f"{pushpin.decode()}{r}й раунд\n"
+            msg += f"\n{pushpin.decode()}{r}й раунд\n"
             for u, b in s.items():
                 msg += f"Пользователь {u} -- {b}\n"
         return END, msg
