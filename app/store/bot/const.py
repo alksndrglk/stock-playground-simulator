@@ -15,5 +15,5 @@ add_to_chat_event = {
     "member_id": -app.config.bot.group_id,
 }
 
-dollar = b'\xF0\x9F\x92\xB2'
-case = b'\xf0\x9f\x92\xbc'
+dollar = b"\xF0\x9F\x92\xB2"
+case = b"\xf0\x9f\x92\xbc"
