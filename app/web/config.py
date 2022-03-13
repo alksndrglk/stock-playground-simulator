@@ -46,12 +46,9 @@ def setup_config(app: "Application", config_path: str):
     with open(config_path, "r") as f:
         raw_config = yaml.safe_load(f)
 
-    fernet_key = fernet.Fernet.generate_key()
-    f = fernet.Fernet(fernet_key)
-
     app.config = Config(
         session=SessionConfig(
-            key=f.generate_key().decode(),
+            key=raw_config["session"]["key"],
         ),
         admin=AdminConfig(
             email=raw_config["admin"]["email"],
