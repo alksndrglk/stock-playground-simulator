@@ -16,6 +16,7 @@ from app.store.bot.const import (
     FINAL_SENTENCE,
     dollar,
     case,
+    pushpin,
 )
 from app.web.utils import periodic
 from app.store.vk_api.dataclasses import Update, Message, UpdateObject
@@ -157,8 +158,9 @@ class BotManager:
 
     async def user_finished_bidding(self, game: Game, upd: UpdateObject):
         msg = f"{game.users[upd.user_id].user_name} закончил торги.\n"
-        if upd.user_id not in game.round_info["finished_bidding"]:
-            game.round_info["finished_bidding"].append(upd.user_id)
+        if upd.user_id in game.round_info["finished_bidding"]:
+            return STATIC, "Вы уже занчили торги."
+        game.round_info["finished_bidding"].append(upd.user_id)
         if [*game.users.keys()] == game.round_info["finished_bidding"]:
             return await self.finish_round(game)
         return STATIC, msg
@@ -207,7 +209,7 @@ class BotManager:
     def show_state(game: Game):
         msg = "Полная статистика по раундам:\n"
         for r, s in game.state.items():
-            msg += f"📍{r}й раунд\n"
+            msg += f"{pushpin.decode()}{r}й раунд\n"
             for u, b in s.items():
                 msg += f"Пользователь {u} -- {b}\n"
         return END, msg
@@ -221,16 +223,16 @@ class BotManager:
             fc = 0
             for k, v in u.brokerage_account.portfolio.items():
                 fc += v * stocks[k].cost
-            msg += f"  {u.user_name}({u.user_id})\n{str(u)}\nCтоимость портфеля: {fc:.2f}{dollar.decode()}\n\n"
+            msg += f"{u.user_name}({u.user_id})\n{str(u)}\nCтоимость портфеля: {fc:.2f}{dollar.decode()}\n\n"
         return msg
 
     @staticmethod
     def market_situtaion(
         stocks: Dict[str, Stock],
         event: StockMarketEvent = None,
-        text: str = " Цены на акции:\n",
+        text: str = f"{chart.decode()} Цены на акции:\n",
     ) -> str:
         if event:
             text = str(event) + text
-        text += "  \n".join(str(s) for s in stocks.values())
+        text += "\n".join(str(s) for s in stocks.values())
         return text
