@@ -231,7 +231,7 @@ class BotManager:
             fc = 0
             for k, v in u.brokerage_account.portfolio.items():
                 fc += v * stocks[k].cost
-            u_msg = f"{u.user_name}({u.user_id})\n{str(u)}\nCтоимость портфеля: {fc:.2f}{dollar.decode()}"
+            u_msg = f".{u.user_name}({u.user_id})\n{str(u)}\nCтоимость портфеля: {fc:.2f}{dollar.decode()}"
             total = fc + u.brokerage_account.points
             u_msg += (
                 f"\n{minus.decode()*5}\nИтого:{total:.2f}{dollar.decode()}\n\n"
