@@ -9,6 +9,7 @@ from app.store.database.gino import db
 from gino.dialects.asyncpg import JSONB
 
 from app.store.bot.errors import SymbolNotInPortfolio, OperationIsUnavailable
+
 # from app.store.bot.const import minus
 
 
