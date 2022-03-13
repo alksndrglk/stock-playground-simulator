@@ -3,6 +3,6 @@ RUN apt update && apt -y install gettext-base
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 COPY . .
-ENV CONFIGPATH ./config/prod_config.yml
+ENV CONFIGPATH ./config/config.yml
 CMD ["sh", "-c", "/start.sh"]
 
