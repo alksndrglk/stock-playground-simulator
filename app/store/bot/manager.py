@@ -163,7 +163,7 @@ class BotManager:
 
     async def finish_round(self, game: Game):
         game.round_info["finished_bidding"] = []
-        msg = f"📍{game.round_info['round_number']}й раунд торгов окончен\n"
+        msg = f"{game.round_info['round_number']}й раунд торгов окончен\n"
         game.state[game.round_info["round_number"]] = {
             u: str(v) for u, v in game.users.items()
         }
@@ -205,28 +205,28 @@ class BotManager:
     def show_state(game: Game):
         msg = "Полная статистика по раундам:\n"
         for r, s in game.state.items():
-            msg += f"📍{r}й раунд\n"
+            msg += f"{r}й раунд\n"
             for u, b in s.items():
-                msg += f"  Пользователь {u} -- {b}\n"
+                msg += f"Пользователь {u} -- {b}\n"
         return END, msg
 
     @staticmethod
     def brokerage_accounts_info(
         users: List[User], stocks: Dict[str, Stock]
     ) -> str:
-        msg = f"\n\nСостояние инвестиционных портфелей 💼:\n\n"
+        msg = f"\n\nСостояние инвестиционных портфелей :\n\n"
         for u in users:
             fc = 0
             for k, v in u.brokerage_account.portfolio.items():
                 fc += v * stocks[k].cost
-            msg += f"  {u.user_name}({u.user_id})\n{str(u)}\nCтоимость портфеля: {fc:.2f}💲\n\n"
+            msg += f"  {u.user_name}({u.user_id})\n{str(u)}\nCтоимость портфеля: {fc:.2f}\n\n"
         return msg
 
     @staticmethod
     def market_situtaion(
         stocks: Dict[str, Stock],
         event: StockMarketEvent = None,
-        text: str = "📈Цены на акции:\n",
+        text: str = "\xF0\x9F\x93\x88 Цены на акции:\n",
     ) -> str:
         if event:
             text = str(event) + text
