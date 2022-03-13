@@ -17,6 +17,7 @@ from app.store.bot.const import (
     dollar,
     case,
     pushpin,
+    chart,
 )
 from app.web.utils import periodic
 from app.store.vk_api.dataclasses import Update, Message, UpdateObject
