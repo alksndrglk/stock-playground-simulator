@@ -1,8 +1,8 @@
-"""Linux -> Mac
+"""from linux to mac
 
-Revision ID: 23d6b1e6663b
+Revision ID: 4c4228efd7d5
 Revises: 
-Create Date: 2022-03-07 11:30:40.799882
+Create Date: 2022-03-13 09:08:17.948308
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '23d6b1e6663b'
+revision = '4c4228efd7d5'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -31,12 +31,13 @@ def upgrade():
     sa.Column('chat_id', sa.Integer(), nullable=False),
     sa.Column('round_info', postgresql.JSONB(astext_type=sa.Text()), server_default='{}', nullable=True),
     sa.Column('state', postgresql.JSONB(astext_type=sa.Text()), server_default='{}', nullable=True),
+    sa.Column('finished_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('market_events',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('message', sa.String(), nullable=False),
-    sa.Column('diff', sa.Integer(), nullable=False),
+    sa.Column('diff', sa.Float(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('player',
@@ -54,22 +55,22 @@ def upgrade():
     sa.Column('cost', sa.Float(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index(op.f('ix_stock_symbol'), 'stock', ['symbol'], unique=True)
+    op.create_index(op.f('ix_stock_symbol'), 'stock', ['symbol'], unique=False)
     op.create_table('brokerage_accounts',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('game_id', sa.Integer(), nullable=False),
-    sa.Column('points', sa.Integer(), nullable=True),
+    sa.Column('points', sa.Float(), nullable=True),
     sa.Column('portfolio', postgresql.JSONB(astext_type=sa.Text()), server_default='{}', nullable=True),
-    sa.ForeignKeyConstraint(['game_id'], ['game.id'], ),
-    sa.ForeignKeyConstraint(['user_id'], ['player.id'], ),
+    sa.ForeignKeyConstraint(['game_id'], ['game.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['user_id'], ['player.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('games_x_users',
     sa.Column('game_id', sa.Integer(), nullable=True),
     sa.Column('user_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['game_id'], ['game.id'], ),
-    sa.ForeignKeyConstraint(['user_id'], ['player.id'], )
+    sa.ForeignKeyConstraint(['game_id'], ['game.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['user_id'], ['player.id'], ondelete='CASCADE')
     )
     op.create_table('stock_in_game',
     sa.Column('game_id', sa.Integer(), nullable=True),
@@ -77,10 +78,11 @@ def upgrade():
     sa.Column('symbol', sa.String(), nullable=False),
     sa.Column('description', sa.String(), nullable=False),
     sa.Column('cost', sa.Float(), nullable=False),
-    sa.ForeignKeyConstraint(['game_id'], ['game.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.ForeignKeyConstraint(['game_id'], ['game.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('symbol', 'game_id', name='pk')
     )
-    op.create_index(op.f('ix_stock_in_game_symbol'), 'stock_in_game', ['symbol'], unique=True)
+    op.create_index(op.f('ix_stock_in_game_symbol'), 'stock_in_game', ['symbol'], unique=False)
     # ### end Alembic commands ###
 
 
