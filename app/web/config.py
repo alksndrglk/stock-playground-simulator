@@ -10,7 +10,7 @@ if typing.TYPE_CHECKING:
 
 @dataclass
 class SessionConfig:
-    key: fernet.Fernet
+    key: bytes
 
 
 @dataclass
@@ -51,7 +51,7 @@ def setup_config(app: "Application", config_path: str):
 
     app.config = Config(
         session=SessionConfig(
-            key=f,
+            key=f.generate_key(),
         ),
         admin=AdminConfig(
             email=raw_config["admin"]["email"],
