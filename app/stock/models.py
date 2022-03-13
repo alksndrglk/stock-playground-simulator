@@ -9,7 +9,7 @@ from app.store.database.gino import db
 from gino.dialects.asyncpg import JSONB
 
 from app.store.bot.errors import SymbolNotInPortfolio, OperationIsUnavailable
-
+from app.store.bot.const import minus
 
 @dataclass
 class BrokerageAccount:
@@ -20,7 +20,7 @@ class BrokerageAccount:
     portfolio: Dict[str, int] = field(default_factory=dict)
 
     def __str__(self) -> str:
-        p = "\n".join([f"{k}:{v}" for k, v in self.portfolio.items()])
+        p = "\n".join([f"{k}{minus.decode()}{v}" for k, v in self.portfolio.items()])
         return f"На счете: {self.points:.2f}💲\nAкции:\n{p}"
 
     def sell(

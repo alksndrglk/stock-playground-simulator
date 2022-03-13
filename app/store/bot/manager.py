@@ -18,6 +18,8 @@ from app.store.bot.const import (
     case,
     pushpin,
     chart,
+    rong,
+    check,
 )
 from app.web.utils import periodic
 from app.store.vk_api.dataclasses import Update, Message, UpdateObject
@@ -151,7 +153,7 @@ class BotManager:
             await self.app.store.exchange.update_brokerage_acc(
                 new_brokerage_acc
             )
-            return "Операция выполнена"
+            return f"{check.decode()}Операция выполнена"
         except OperationIsUnavailable as e:
             return str(e)
         except SymbolNotInPortfolio as e:
@@ -160,7 +162,7 @@ class BotManager:
     async def user_finished_bidding(self, game: Game, upd: UpdateObject):
         msg = f"{game.users[upd.user_id].user_name} закончил торги.\n"
         if upd.user_id in game.round_info["finished_bidding"]:
-            return STATIC, "Вы уже занчили торги."
+            return STATIC, f"{rong.decode()}Вы уже закончили торги."
         game.round_info["finished_bidding"].append(upd.user_id)
         if [*game.users.keys()] == game.round_info["finished_bidding"]:
             return await self.finish_round(game)
