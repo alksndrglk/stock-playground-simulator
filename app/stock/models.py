@@ -9,7 +9,7 @@ from app.store.database.gino import db
 from gino.dialects.asyncpg import JSONB
 
 from app.store.bot.errors import SymbolNotInPortfolio, OperationIsUnavailable
-from app.store.bot.const import minus
+# from app.store.bot.const import minus
 
 
 @dataclass
@@ -21,6 +21,7 @@ class BrokerageAccount:
     portfolio: Dict[str, int] = field(default_factory=dict)
 
     def __str__(self) -> str:
+        minus = b"\xE2\x9E\x96"
         p = "\n".join(
             [f"{k}{minus.decode()}{v}" for k, v in self.portfolio.items()]
         )
