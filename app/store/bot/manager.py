@@ -226,12 +226,21 @@ class BotManager:
         users: List[User], stocks: Dict[str, Stock]
     ) -> str:
         msg = f"\nСостояние инвестиционных портфелей{case.decode()} :\n\n"
+        dash = {}
         for u in users:
             fc = 0
             for k, v in u.brokerage_account.portfolio.items():
                 fc += v * stocks[k].cost
-            msg += f"{u.user_name}({u.user_id})\n{str(u)}\nCтоимость портфеля: {fc:.2f}{dollar.decode()}"
-            msg += f"\n{minus.decode()*5}\nИтого:{fc+u.brokerage_account.points:.2f}{dollar.decode()}\n\n"
+            u_msg = f".{u.user_name}({u.user_id})\n{str(u)}\nCтоимость портфеля: {fc:.2f}{dollar.decode()}"
+            total = fc + u.brokerage_account.points
+            u_msg += (
+                f"\n{minus.decode()*5}\nИтого:{total:.2f}{dollar.decode()}\n\n"
+            )
+            dash[total] = u_msg
+        for i, k in enumerate(sorted(dash), 1):
+            if i == 1:
+                dash[k][:-2] += f"{'❗'*3}Лидер{'❗'*3}\n\n"
+            msg += str(i) + dash[k]
         return msg
 
     @staticmethod
