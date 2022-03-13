@@ -1,5 +1,5 @@
-server:
-  port: $PORT
+session:
+  key: S_XH3UWO9ow93Zxrh9jXMEWgQIwUWov5UudRJuPEtWs=
 admin:
   email: $ADMIN_EMAIL
   password: $ADMIN_PASS

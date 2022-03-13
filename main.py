@@ -11,9 +11,7 @@ if os.environ.get("CONFIGPATH"):
 else:
     config_path = BASE_DIR / "config" / "config.yaml"
 
-ON_HEROKU = os.environ.get("ON_HEROKU")
-
-if ON_HEROKU:
+if os.environ.get("PORT"):
     port = int(os.environ.get("PORT", 17995))
 else:
     port = 8080
