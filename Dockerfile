@@ -4,5 +4,5 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 COPY . .
 ENV CONFIGPATH ./config/config.yml
-CMD ["sh", "-c", "/start.sh"]
+CMD ["bash", "./start.sh"]
 
