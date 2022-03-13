@@ -1,7 +1,7 @@
 from app.web.app import app
 
 ROUND_TIME = 60
-FINAL_SENTENCE = "Финальные результаты торгов на бирже:\n"
+FINAL_SENTENCE = "Финальные результаты торгов на бирже"
 RULES_AND_GREET = """
    Для корректной работы бота, дайте ему права Администратора в настройках.❗\n
    Управление осуществляется в сообщениях командами sell и buy.\n
@@ -19,3 +19,6 @@ dollar = b"\xF0\x9F\x92\xB2"
 case = b"\xf0\x9f\x92\xbc"
 chart = b"\xF0\x9F\x93\x88"
 pushpin = b"\xF0\x9F\x93\x8D"
+rong = b"\xF0\x9F\x94\x95"
+check = b"\xE2\x9C\x94"
+minus = b"\xE2\x9E\x96"
