@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, Set, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy import and_
@@ -20,7 +20,8 @@ class BrokerageAccount:
     portfolio: Dict[str, int] = field(default_factory=dict)
 
     def __str__(self) -> str:
-        return f"На счете: {self.points}$, акции: {self.portfolio}"
+        p = "\n".join([f"{k}:{v}" for k, v in self.portfolio.items()])
+        return f"На счете: {self.points:.2f}$\nAкции:\n{p}"
 
     def sell(
         self, symbol: str, quantity: int, cost: float
@@ -51,7 +52,9 @@ class BrokerageAccountModel(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(
-        db.Integer, db.ForeignKey("player.id", ondelete="CASCADE"), nullable=False
+        db.Integer,
+        db.ForeignKey("player.id", ondelete="CASCADE"),
+        nullable=False,
     )
     game_id = db.Column(
         db.Integer, db.ForeignKey("game.id", ondelete="CASCADE"), nullable=False
@@ -192,8 +195,12 @@ class GameModel(db.Model):
 class GameXUser(db.Model):
     __tablename__ = "games_x_users"
 
-    game_id = db.Column(db.Integer, db.ForeignKey("game.id", ondelete="CASCADE"))
-    user_id = db.Column(db.Integer, db.ForeignKey("player.id", ondelete="CASCADE"))
+    game_id = db.Column(
+        db.Integer, db.ForeignKey("game.id", ondelete="CASCADE")
+    )
+    user_id = db.Column(
+        db.Integer, db.ForeignKey("player.id", ondelete="CASCADE")
+    )
 
 
 def model(table):
@@ -210,11 +217,15 @@ def model(table):
 
 class StockModel(db.Model, model("stock")):
     def to_dct(self) -> Stock:
-        return Stock(symbol=self.symbol, description=self.description, cost=self.cost)
+        return Stock(
+            symbol=self.symbol, description=self.description, cost=self.cost
+        )
 
 
 class GameStockModel(db.Model, model("stock_in_game")):
-    game_id = db.Column(db.Integer, db.ForeignKey("game.id", ondelete="CASCADE"))
+    game_id = db.Column(
+        db.Integer, db.ForeignKey("game.id", ondelete="CASCADE")
+    )
     _idx1 = db.UniqueConstraint("symbol", "game_id", name="pk")
 
     def to_dct(self) -> Stock:

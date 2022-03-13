@@ -17,7 +17,9 @@ class AdminAccessor(BaseAccessor):
         )
 
     async def get_by_email(self, email: str) -> Optional[Admin]:
-        res = await AdminModel.query.where(AdminModel.email == email).gino.first()
+        res = await AdminModel.query.where(
+            AdminModel.email == email
+        ).gino.first()
         if not res:
             return None
         return Admin(id=res.id, email=res.email, password=res.password)

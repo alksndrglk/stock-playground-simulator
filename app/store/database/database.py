@@ -33,4 +33,3 @@ class Database:
         self.app = None
         engine, db.bind = db.bind, None
         await engine.close()
-
