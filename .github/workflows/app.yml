@@ -42,6 +42,5 @@ jobs:
         HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
       run: |
         heroku container:login
-        heroku stack:set heroku-20
         heroku container:push -a investor-sandbox web
         heroku container:release -a investor-sandbox web
