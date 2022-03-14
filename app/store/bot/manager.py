@@ -10,6 +10,7 @@ from app.stock.models import (
     User,
 )
 from app.store.bot.const import (
+    ALARM,
     ROUND_TIME,
     RULES_AND_GREET,
     add_to_chat_event,
@@ -77,7 +78,7 @@ class BotManager:
             payload = update.object.payload.get("command")
             if not game:
                 if payload == "start":
-                    text = await self.start(update.object.peer_id)
+                    keyboard, text = await self.start(update.object.peer_id)
                     self._auto_tasks[
                         update.object.peer_id
                     ] = asyncio.create_task(
@@ -119,10 +120,12 @@ class BotManager:
                 self.app.store.exchange.update_game(game),
             )
 
-    async def start(self, peer_id: int) -> str:
+    async def start(self, peer_id: int):
         players = await self.app.store.vk_api.get_conversation_members(peer_id)
+        if not players:
+            return GREETING, ALARM
         stocks = await self.app.store.exchange.create_game(players, peer_id)
-        return self.market_situtaion(stocks)
+        return STATIC, self.market_situtaion(stocks)
 
     async def send_keyboard(self, peer_id: int, keyboard=STATIC, text=" "):
         await self.app.store.vk_api.send_message(
