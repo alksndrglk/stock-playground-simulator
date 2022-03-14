@@ -157,7 +157,7 @@ class VkApiAccessor(BaseAccessor):
                 "group_id": str(self.app.config.bot.group_id),
                 "message": message.text.replace("\n", "%0A"),
                 "access_token": self.app.config.bot.token,
-                "keyboard": message.keyboard,
+                "keyboard": json.dumps(message.keyboard),
             },
         )
         async with self.session.get(query) as resp:

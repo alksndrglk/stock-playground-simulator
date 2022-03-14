@@ -9,7 +9,7 @@ class UpdateObject:
     peer_id: int
     user_id: int
     body: str
-    action: str
+    action: dict = field(default_factory=dict)
     payload: dict = field(default_factory=dict)
 
 
