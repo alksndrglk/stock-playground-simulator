@@ -67,7 +67,7 @@ class BotManager:
             raise RequestDoesNotMeetTheStandart
 
     async def handle_updates(self, update: Update):
-        text, keyboard = '', STATIC
+        text, keyboard = "", STATIC
         if update.object.action == add_to_chat_event:
             keyboard, text = GREETING, RULES_AND_GREET
         else:
