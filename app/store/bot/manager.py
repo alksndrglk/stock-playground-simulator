@@ -67,7 +67,7 @@ class BotManager:
             raise RequestDoesNotMeetTheStandart
 
     async def handle_updates(self, update: Update):
-        keyboard = STATIC
+        keyboard = {}
         text = ""
         if update.object.action == add_to_chat_event:
             keyboard, text = GREETING, RULES_AND_GREET
@@ -99,11 +99,18 @@ class BotManager:
                 await self.app.store.exchange.update_game(game)
             elif update.type == "message_new":
                 text = await self.message_processing(game, update.object)
-        if text:
+        if keyboard:
             await self.send_keyboard(
                 update.object.peer_id,
                 keyboard=keyboard,
                 text=text,
+            )
+        elif text:
+            await self.app.store.vk_api.send_message(
+                Message(
+                    update.object.peer_id,
+                    text=text,
+                )
             )
 
     @periodic(ROUND_TIME)
@@ -167,13 +174,13 @@ class BotManager:
         msg = f"{game.users[upd.user_id].user_name} закончил торги.\n"
         if upd.user_id in game.round_info["finished_bidding"]:
             return (
-                STATIC,
+                {},
                 f"{rong.decode()}{game.users[upd.user_id].user_name}, Вы уже закончили торги.",
             )
         game.round_info["finished_bidding"].append(upd.user_id)
         if [*game.users.keys()] == game.round_info["finished_bidding"]:
             return await self.finish_round(game)
-        return STATIC, msg
+        return {}, msg
 
     async def finish_round(self, game: Game):
         game.round_info["finished_bidding"] = []
@@ -195,7 +202,7 @@ class BotManager:
             self._auto_tasks[game.chat_id] = asyncio.create_task(
                 self.round_automation(game.chat_id)
             )
-        return STATIC, msg
+        return {}, msg
 
     async def finish_game(self, game: Game, msg=FINAL_SENTENCE):
         game.finished_at = datetime.now()
@@ -222,7 +229,7 @@ class BotManager:
             msg += f"\n{pushpin.decode()}{r}й раунд\n"
             for u, b in s.items():
                 msg += f"Пользователь {u} -- {b}\n"
-        return END, msg
+        return {}, msg
 
     @staticmethod
     def brokerage_accounts_info(
@@ -239,11 +246,13 @@ class BotManager:
             u_msg += (
                 f"\n{minus.decode()*5}\nИтого:{total:.2f}{dollar.decode()}\n\n"
             )
-            dash[total] = u_msg
-        for i, k in enumerate(sorted(dash), 1):
+            dash[u.user_id] = [total, u_msg]
+        for i, k in enumerate(
+            sorted(dash.items(), key=lambda e: e[1][0], reverse=True), 1
+        ):
             if i == 1:
-                dash[k] = dash[k][:-2] + f"{'❗'*3}Лидер{'❗'*3}"
-            msg += str(i) + dash[k]
+                k[1][1] = k[1][1][:-2] + f"{'❗'*3}Лидер{'❗'*3}\n\n"
+            msg += str(i) + k[1][1]
         return msg
 
     @staticmethod

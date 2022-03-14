@@ -1,9 +1,7 @@
 import json
-from app.stock.models import Stock
 
 GREETING = json.dumps(
     {
-        "inline": False,
         "one_time": True,
         "buttons": [
             [
@@ -22,8 +20,7 @@ GREETING = json.dumps(
 
 STATIC = json.dumps(
     {
-        "inline": False,
-        "one_time": True,
+        "one_time": False,
         "buttons": [
             [
                 {
@@ -49,8 +46,7 @@ STATIC = json.dumps(
 
 END = json.dumps(
     {
-        "inline": False,
-        "one_time": True,
+        "one_time": False,
         "buttons": [
             [
                 {

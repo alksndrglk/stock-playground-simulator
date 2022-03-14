@@ -82,40 +82,43 @@ class VkApiAccessor(BaseAccessor):
                 },
             )
         ) as resp:
-            data = await resp.json()
-            self.logger.info(data)
-            self.ts = data["ts"]
-            raw_updates = data.get("updates", [])
-            updates = []
-            for update in raw_updates:
-                peer_id = update["object"].get("peer_id", None)
-                user_id = update["object"].get("user_id", None)
-                updates.append(
-                    Update(
-                        type=update["type"],
-                        object=UpdateObject(
-                            id=update["object"].get("message", {}).get("id"),
-                            peer_id=peer_id
-                            if peer_id
-                            else update["object"]
-                            .get("message", {})
-                            .get("peer_id"),
-                            user_id=user_id
-                            if user_id
-                            else update["object"]
-                            .get("message", {})
-                            .get("from_id"),
-                            body=update["object"]
-                            .get("message", {})
-                            .get("text"),
-                            action=update["object"]
-                            .get("message", {})
-                            .get("action", {}),
-                            payload=update["object"].get("payload", {}),
-                        ),
+            if resp.status == 200:
+                data = await resp.json()
+                self.logger.info(data)
+                self.ts = data["ts"]
+                raw_updates = data.get("updates", [])
+                updates = []
+                for update in raw_updates:
+                    peer_id = update["object"].get("peer_id", None)
+                    user_id = update["object"].get("user_id", None)
+                    updates.append(
+                        Update(
+                            type=update["type"],
+                            object=UpdateObject(
+                                id=update["object"]
+                                .get("message", {})
+                                .get("id"),
+                                peer_id=peer_id
+                                if peer_id
+                                else update["object"]
+                                .get("message", {})
+                                .get("peer_id"),
+                                user_id=user_id
+                                if user_id
+                                else update["object"]
+                                .get("message", {})
+                                .get("from_id"),
+                                body=update["object"]
+                                .get("message", {})
+                                .get("text"),
+                                action=update["object"]
+                                .get("message", {})
+                                .get("action", {}),
+                                payload=update["object"].get("payload", {}),
+                            ),
+                        )
                     )
-                )
-            return updates
+                return updates
             # await self.app.store.bots_manager.handle_updates(updates)
 
     async def get_conversation_members(self, peer_id) -> Optional[List[VkUser]]:
