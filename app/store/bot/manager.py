@@ -67,8 +67,8 @@ class BotManager:
             raise RequestDoesNotMeetTheStandart
 
     async def handle_updates(self, update: Update):
-        keyboard = STATIC
-        text = ""
+        keyboard = GREETING
+        text = "НЕ ПОНИМАЮ"
         if update.object.action == add_to_chat_event:
             keyboard, text = GREETING, RULES_AND_GREET
         else:
@@ -99,18 +99,11 @@ class BotManager:
                 await self.app.store.exchange.update_game(game)
             elif update.type == "message_new":
                 text = await self.message_processing(game, update.object)
-        if keyboard:
+        if text:
             await self.send_keyboard(
                 update.object.peer_id,
                 keyboard=keyboard,
                 text=text,
-            )
-        elif text:
-            await self.app.store.vk_api.send_message(
-                Message(
-                    update.object.peer_id,
-                    text=text,
-                )
             )
 
     @periodic(ROUND_TIME)
