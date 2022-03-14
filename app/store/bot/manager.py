@@ -67,7 +67,7 @@ class BotManager:
             raise RequestDoesNotMeetTheStandart
 
     async def handle_updates(self, update: Update):
-        keyboard = {}
+        keyboard = STATIC
         text = ""
         if update.object.action == add_to_chat_event:
             keyboard, text = GREETING, RULES_AND_GREET
@@ -144,6 +144,8 @@ class BotManager:
         )
 
     async def message_processing(self, game: Game, upd: UpdateObject):
+        if upd.user_id in game.round_info["finished_bidding"]:
+            return f"{rong.decode()}{game.users[upd.user_id].user_name}, Вы уже закончили торги."
         try:
             client_message = self.parse_message(upd.body)
             symbol = game.stocks.get(client_message.symbol)
@@ -174,13 +176,15 @@ class BotManager:
         msg = f"{game.users[upd.user_id].user_name} закончил торги.\n"
         if upd.user_id in game.round_info["finished_bidding"]:
             return (
-                {},
+                STATIC,
                 f"{rong.decode()}{game.users[upd.user_id].user_name}, Вы уже закончили торги.",
             )
         game.round_info["finished_bidding"].append(upd.user_id)
-        if [*game.users.keys()] == game.round_info["finished_bidding"]:
+        if set([*game.users.keys()]) == set(
+            game.round_info["finished_bidding"]
+        ):
             return await self.finish_round(game)
-        return {}, msg
+        return STATIC, msg
 
     async def finish_round(self, game: Game):
         game.round_info["finished_bidding"] = []
@@ -202,7 +206,7 @@ class BotManager:
             self._auto_tasks[game.chat_id] = asyncio.create_task(
                 self.round_automation(game.chat_id)
             )
-        return {}, msg
+        return STATIC, msg
 
     async def finish_game(self, game: Game, msg=FINAL_SENTENCE):
         game.finished_at = datetime.now()
@@ -229,7 +233,7 @@ class BotManager:
             msg += f"\n{pushpin.decode()}{r}й раунд\n"
             for u, b in s.items():
                 msg += f"Пользователь {u} -- {b}\n"
-        return {}, msg
+        return END, msg
 
     @staticmethod
     def brokerage_accounts_info(
