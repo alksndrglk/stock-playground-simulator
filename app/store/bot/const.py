@@ -18,7 +18,7 @@ add_to_chat_event = {
     "member_id": -app.config.bot.group_id,
 }
 
-payload_answers ={
+payload_answers = {
     "start": "Поехали!",
     "end": "Заканчиваем игру.",
     "show_state": "Выгружаем статистику.",
