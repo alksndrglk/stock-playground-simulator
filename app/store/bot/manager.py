@@ -67,8 +67,7 @@ class BotManager:
             raise RequestDoesNotMeetTheStandart
 
     async def handle_updates(self, update: Update):
-        keyboard = GREETING
-        text = "НЕ ПОНИМАЮ"
+        text, keyboard = '', STATIC
         if update.object.action == add_to_chat_event:
             keyboard, text = GREETING, RULES_AND_GREET
         else:
@@ -84,11 +83,13 @@ class BotManager:
                     ] = asyncio.create_task(
                         self.round_automation(update.object.peer_id)
                     )
-                if payload == "show_state":
+                elif payload == "show_state":
                     finished_game = await self.app.store.exchange.get_stats(
                         update.object.peer_id
                     )
                     keyboard, text = self.show_state(finished_game)
+                else:
+                    keyboard, text = GREETING, "НЕ ПОНИМАЮ"
             elif update.type == "message_event":
                 if payload == "finished_bidding":
                     keyboard, text = await self.user_finished_bidding(
