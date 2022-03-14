@@ -3,12 +3,15 @@ from app.web.app import app
 ROUND_TIME = 60
 FINAL_SENTENCE = "\nФинальные результаты торгов на бирже"
 ALARM = "Для корректной работы бота, дайте ему права Администратора в настройках.❗\n"
-RULES_AND_GREET = ALARM + """
+RULES_AND_GREET = (
+    ALARM
+    + """
    Управление осуществляется в сообщениях командами sell и buy.\n
    Пример команд: sell AAPL 100, buy amzn 54\n
    Один раунд торгов длится не более 1мин\n 
    Когда все игроки будут готовы нажмите на кнопку СТАРТ внизу.\n
    """
+)
 
 add_to_chat_event = {
     "type": "chat_invite_user",
