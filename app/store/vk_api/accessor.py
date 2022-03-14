@@ -91,9 +91,10 @@ class VkApiAccessor(BaseAccessor):
                 for update in raw_updates:
                     peer_id = update["object"].get("peer_id", None)
                     user_id = update["object"].get("user_id", None)
+                    _type = update["type"]
                     updates.append(
                         Update(
-                            type=update["type"],
+                            type=_type,
                             object=UpdateObject(
                                 id=update["object"]
                                 .get("message", {})
@@ -115,6 +116,9 @@ class VkApiAccessor(BaseAccessor):
                                 .get("message", {})
                                 .get("action", {}),
                                 payload=update["object"].get("payload", {}),
+                                obj=update["object"]
+                                if _type == "message_event"
+                                else {},
                             ),
                         )
                     )
@@ -158,6 +162,27 @@ class VkApiAccessor(BaseAccessor):
                 "message": message.text.replace("\n", "%0A"),
                 "access_token": self.app.config.bot.token,
                 "keyboard": json.dumps(message.keyboard),
+            },
+        )
+        async with self.session.get(query) as resp:
+            data = await resp.json()
+            self.logger.info(data)
+
+    async def send_answer(self, obj, text) -> None:
+        query = self._build_query(
+            API_PATH,
+            "messages.sendMessageEventAnswer",
+            params={
+                "event_id": obj["event_id"],
+                "user_id": obj["user_id"],
+                "peer_id": obj["peer_id"],
+                "access_token": self.app.config.bot.token,
+                "event_data": json.dumps(
+                    {
+                        "type": "show_snackbar",
+                        "text": text,
+                    }
+                ),
             },
         )
         async with self.session.get(query) as resp:
