@@ -20,7 +20,7 @@ GREETING = json.dumps(
 
 STATIC = json.dumps(
     {
-        "one_time": False,
+        "one_time": True,
         "buttons": [
             [
                 {
@@ -46,7 +46,7 @@ STATIC = json.dumps(
 
 END = json.dumps(
     {
-        "one_time": False,
+        "one_time": True,
         "buttons": [
             [
                 {
