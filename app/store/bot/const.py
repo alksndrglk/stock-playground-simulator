@@ -18,6 +18,13 @@ add_to_chat_event = {
     "member_id": -app.config.bot.group_id,
 }
 
+payload_answers ={
+    "start": "Поехали!",
+    "end": "Заканчиваем игру.",
+    "show_state": "Выгружаем статистику.",
+    "finished_bidding": "Игрок закончил торги.",
+}
+
 dollar = b"\xF0\x9F\x92\xB2"
 case = b"\xf0\x9f\x92\xbc"
 chart = b"\xF0\x9F\x93\x88"

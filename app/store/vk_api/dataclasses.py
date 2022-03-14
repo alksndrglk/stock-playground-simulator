@@ -11,6 +11,7 @@ class UpdateObject:
     body: str
     action: dict = field(default_factory=dict)
     payload: dict = field(default_factory=dict)
+    obj: dict = field(default_factory=dict)
 
 
 @dataclass

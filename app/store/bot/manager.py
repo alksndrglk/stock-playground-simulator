@@ -22,6 +22,7 @@ from app.store.bot.const import (
     rong,
     check,
     minus,
+    payload_answers,
 )
 from app.web.utils import periodic
 from app.store.vk_api.dataclasses import Update, Message, UpdateObject
@@ -75,6 +76,12 @@ class BotManager:
                 update.object.peer_id
             )
             payload = update.object.payload.get("command")
+            if payload:
+                asyncio.create_task(
+                    self.app.store.vk_api.send_answer(
+                        update.object.obj, text=payload_answers.get(payload)
+                    )
+                )
             if not game:
                 if payload == "start":
                     keyboard, text = await self.start(update.object.peer_id)
