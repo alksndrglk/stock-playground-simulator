@@ -28,6 +28,7 @@ class Database:
         )
         db.bind = self._engine
         self.db = db
+        # await db.gino.create_all()
 
     async def disconnect(self, *_, **kw):
         self.app = None

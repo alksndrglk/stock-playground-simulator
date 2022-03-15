@@ -17,3 +17,9 @@ exclude = '''
   | venv
 )/
 '''
+
+[tool.coverage.run]
+omit = [
+    "tests/*",
+    "app/web/*"
+    ]

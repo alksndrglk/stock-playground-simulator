@@ -213,7 +213,6 @@ def model(table):
         __tablename__ = table
 
         id = db.Column(db.Integer, primary_key=True)
-        symbol = db.Column(db.String, index=True, nullable=False)
         description = db.Column(db.String, nullable=False)
         cost = db.Column(db.Float, nullable=False)
 
@@ -221,13 +220,19 @@ def model(table):
 
 
 class StockModel(db.Model, model("stock")):
+    symbol = db.Column(db.String, unique=True, index=True, nullable=False)
+
     def to_dct(self) -> Stock:
         return Stock(
-            symbol=self.symbol, description=self.description, cost=self.cost
+            id=self.id,
+            symbol=self.symbol,
+            description=self.description,
+            cost=self.cost,
         )
 
 
 class GameStockModel(db.Model, model("stock_in_game")):
+    symbol = db.Column(db.String, index=True, nullable=False)
     game_id = db.Column(
         db.Integer, db.ForeignKey("game.id", ondelete="CASCADE")
     )
@@ -270,7 +275,7 @@ class GameStockModel(db.Model, model("stock_in_game")):
 class StockMarketEvent:
     id: Optional[int]
     message: str
-    diff: int
+    diff: float
 
     def __str__(self) -> str:
         return f"Новый день торгов открылся с новости:\n{self.message}\n\n"
@@ -280,7 +285,7 @@ class StockMarketEventModel(db.Model):
     __tablename__ = "market_events"
 
     id = db.Column(db.Integer, primary_key=True)
-    message = db.Column(db.String, nullable=False)
+    message = db.Column(db.String, unique=True, nullable=False)
     diff = db.Column(db.Float, nullable=False)
 
     def to_dct(self) -> StockMarketEvent:
