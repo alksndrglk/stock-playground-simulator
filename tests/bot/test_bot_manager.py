@@ -2,10 +2,6 @@ from app.store.vk_api.dataclasses import Update, UpdateObject, Message
 
 
 class TestHandleUpdates:
-    async def test_no_messages(self, store):
-        await store.bots_manager.handle_updates([])
-        assert store.vk_api.send_message.called is False
-
     async def test_new_message(self, store):
         await store.bots_manager.handle_updates(
             Update(
@@ -17,6 +13,7 @@ class TestHandleUpdates:
                     body="",
                     action={},
                     payload={},
+                    obj={},
                 ),
             )
         )
@@ -24,3 +21,4 @@ class TestHandleUpdates:
         message: Message = store.vk_api.send_message.mock_calls[0].args[0]
         assert message.peer_id == 1
         assert message.text
+        assert message.keyboard

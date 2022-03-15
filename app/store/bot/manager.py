@@ -145,15 +145,16 @@ class BotManager:
         )
 
     async def message_processing(self, game: Game, upd: UpdateObject):
+        for_user = f"[id{upd.user_id}|{game.users[upd.user_id].user_name}]"
         if upd.user_id in game.round_info["finished_bidding"]:
-            return f"{rong.decode()}{game.users[upd.user_id].user_name}, Вы уже закончили торги."
+            return f"{rong.decode()}{for_user}, Вы уже закончили торги."
         try:
             client_message = self.parse_message(upd.body)
             symbol = game.stocks.get(client_message.symbol)
             if not symbol:
                 raise SymbolNotInGame
         except (RequestDoesNotMeetTheStandart, SymbolNotInGame) as e:
-            return str(e)
+            return for_user + str(e)
 
         brokerage_account = game.users[upd.user_id].brokerage_account
         try:
@@ -167,18 +168,19 @@ class BotManager:
             await self.app.store.exchange.update_brokerage_acc(
                 new_brokerage_acc
             )
-            return f"{check.decode()}{game.users[upd.user_id].user_name},операция выполненa."
+            return f"{check.decode()}{for_user},операция выполненa."
         except OperationIsUnavailable as e:
-            return str(e)
+            return for_user + str(e)
         except SymbolNotInPortfolio as e:
-            return str(e)
+            return for_user + str(e)
 
     async def user_finished_bidding(self, game: Game, upd: UpdateObject):
-        msg = f"{game.users[upd.user_id].user_name} закончил торги.\n"
+        for_user = f"[id{upd.user_id}|{game.users[upd.user_id].user_name}]"
+        msg = f"{for_user} закончил торги.\n"
         if upd.user_id in game.round_info["finished_bidding"]:
             return (
                 STATIC,
-                f"{rong.decode()}{game.users[upd.user_id].user_name}, Вы уже закончили торги.",
+                f"{rong.decode()}{for_user}, Вы уже закончили торги.",
             )
         game.round_info["finished_bidding"].append(upd.user_id)
         if set([*game.users.keys()]) == set(
@@ -233,7 +235,7 @@ class BotManager:
         for r, s in game.state.items():
             msg += f"\n{pushpin.decode()}{r}й раунд\n"
             for u, b in s.items():
-                msg += f"Пользователь {u} -- {b}\n"
+                msg += f"Пользователь [id{u}|] -- {b}\n"
         return END, msg
 
     @staticmethod
@@ -246,7 +248,7 @@ class BotManager:
             fc = 0
             for k, v in u.brokerage_account.portfolio.items():
                 fc += v * stocks[k].cost
-            u_msg = f".{u.user_name}({u.user_id})\n{str(u)}\nCтоимость портфеля: {fc:.2f}{dollar.decode()}"
+            u_msg = f".[id{u.user_id}|{u.user_name}]\n{str(u)}\nCтоимость портфеля: {fc:.2f}{dollar.decode()}"
             total = fc + u.brokerage_account.points
             u_msg += (
                 f"\n{minus.decode()*5}\nИтого:{total:.2f}{dollar.decode()}\n\n"
