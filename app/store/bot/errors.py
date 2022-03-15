@@ -17,6 +17,6 @@ class SymbolNotInGame(Exception):
 
 
 class OperationIsUnavailable(Exception):
-    def __init__(self, message=". Не достаточно средств. Операция недоступна."):
+    def __init__(self, message=". Недостаточно средств. Операция недоступна."):
         self.message = message
         super().__init__(self.message)
