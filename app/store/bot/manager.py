@@ -235,7 +235,7 @@ class BotManager:
         for r, s in game.state.items():
             msg += f"\n{pushpin.decode()}{r}й раунд\n"
             for u, b in s.items():
-                msg += f"Пользователь [id{u}|] -- {b}\n"
+                msg += f"Пользователь [id{u}|{b}\n"
         return END, msg
 
     @staticmethod
@@ -248,7 +248,7 @@ class BotManager:
             fc = 0
             for k, v in u.brokerage_account.portfolio.items():
                 fc += v * stocks[k].cost
-            u_msg = f".[id{u.user_id}|{u.user_name}]\n{str(u)}\nCтоимость портфеля: {fc:.2f}{dollar.decode()}"
+            u_msg = f".[id{u.user_id}|{str(u)}\nCтоимость портфеля: {fc:.2f}{dollar.decode()}"
             total = fc + u.brokerage_account.points
             u_msg += (
                 f"\n{minus.decode()*5}\nИтого:{total:.2f}{dollar.decode()}\n\n"
