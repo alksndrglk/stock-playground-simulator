@@ -220,7 +220,8 @@ def model(table):
 
 
 class StockModel(db.Model, model("stock")):
-    symbol = db.Column(db.String,unique=True,index=True, nullable=False)
+    symbol = db.Column(db.String, unique=True, index=True, nullable=False)
+
     def to_dct(self) -> Stock:
         return Stock(
             id=self.id,
