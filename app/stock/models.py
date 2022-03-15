@@ -81,7 +81,7 @@ class User:
     )
 
     def __str__(self) -> str:
-        return str(self.brokerage_account)
+        return f"{self.user_name}] -- " + str(self.brokerage_account)
 
 
 class UserModel(db.Model):
