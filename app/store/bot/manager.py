@@ -166,7 +166,7 @@ class BotManager:
             bk = await self.app.store.exchange.update_brokerage_acc(
                 new_brokerage_acc
             )
-            return f"{check.decode()}{for_user},операция выполненa. На счете: {bk.points}{dollar.decode()}"
+            return f"{check.decode()}{for_user},операция выполненa. На счете: {bk.points:.2f}{dollar.decode()}"
         except OperationIsUnavailable as e:
             return for_user + str(e)
         except SymbolNotInPortfolio as e:

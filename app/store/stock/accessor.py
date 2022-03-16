@@ -152,7 +152,9 @@ class ExchangeAccessor(BaseAccessor):
         )
         return {s.symbol: Stock(**s) for s in stocks_in_game}
 
-    async def update_brokerage_acc(self, brokerage_account: BrokerageAccount):
+    async def update_brokerage_acc(
+        self, brokerage_account: BrokerageAccount
+    ) -> BrokerageAccount:
         bk = (
             await BrokerageAccountModel.update.values(
                 portfolio=brokerage_account.portfolio,
