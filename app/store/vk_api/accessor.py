@@ -145,7 +145,7 @@ class VkApiAccessor(BaseAccessor):
                         users.append(
                             VkUser(
                                 vk_id=profile.get("id"),
-                                user_name=profile.get("first_name"),
+                                user_name=' '.join([profile.get("first_name"),profile.get('last_name')]),
                             )
                         )
                 return users
