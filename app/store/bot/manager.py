@@ -163,10 +163,10 @@ class BotManager:
                 client_message.quantity,
                 symbol.cost,
             )
-            await self.app.store.exchange.update_brokerage_acc(
+            bk = await self.app.store.exchange.update_brokerage_acc(
                 new_brokerage_acc
             )
-            return f"{check.decode()}{for_user},операция выполненa."
+            return f"{check.decode()}{for_user},операция выполненa. На счете: {bk.points}{dollar.decode()}"
         except OperationIsUnavailable as e:
             return for_user + str(e)
         except SymbolNotInPortfolio as e:
@@ -233,7 +233,7 @@ class BotManager:
         for r, s in game.state.items():
             msg += f"\n{pushpin.decode()}{r}й раунд\n"
             for u, b in s.items():
-                msg += f"Пользователь [id{u}|{b}\n"
+                msg += f"[id{u}|{b}\n"
         return END, msg
 
     @staticmethod
