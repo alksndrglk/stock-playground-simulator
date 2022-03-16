@@ -127,7 +127,7 @@ class Stock:
     id: Optional[int] = None
 
     def __str__(self) -> str:
-        return f"{self.description} {self.symbol} {self.cost:.2f}"
+        return f"{self.symbol} {self.cost:.2f} {self.description}"
 
 
 @dataclass

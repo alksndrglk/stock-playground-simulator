@@ -125,7 +125,7 @@ class ExchangeAccessor(BaseAccessor):
                 {
                     "user_id": u.id,
                     "game_id": game_id,
-                    "points": 1000,
+                    "points": 10000,
                 }
                 for u in users
             ]
