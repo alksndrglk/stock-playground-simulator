@@ -28,6 +28,8 @@ def server():
     app.on_shutdown.clear()
     app.store.vk_api = AsyncMock()
     app.store.vk_api.send_message = AsyncMock()
+    app.store.vk_api.send_answer = AsyncMock()
+    # app.store.vk_api.poll = AsyncMock()
 
     app.database = Database(app)
     app.on_startup.append(app.database.connect)

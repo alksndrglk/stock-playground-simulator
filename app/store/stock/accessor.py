@@ -153,15 +153,21 @@ class ExchangeAccessor(BaseAccessor):
         return {s.symbol: Stock(**s) for s in stocks_in_game}
 
     async def update_brokerage_acc(self, brokerage_account: BrokerageAccount):
-        await BrokerageAccountModel.update.values(
-            portfolio=brokerage_account.portfolio,
-            points=brokerage_account.points,
-        ).where(
-            and_(
-                BrokerageAccountModel.user_id == brokerage_account.user_id,
-                BrokerageAccountModel.game_id == brokerage_account.game_id,
+        bk = (
+            await BrokerageAccountModel.update.values(
+                portfolio=brokerage_account.portfolio,
+                points=brokerage_account.points,
             )
-        ).gino.status()
+            .where(
+                and_(
+                    BrokerageAccountModel.user_id == brokerage_account.user_id,
+                    BrokerageAccountModel.game_id == brokerage_account.game_id,
+                )
+            )
+            .returning(*BrokerageAccountModel)
+            .gino.first()
+        )
+        return bk.to_dct()
 
     async def update_game(self, game: Game):
         await GameModel.update.values(
