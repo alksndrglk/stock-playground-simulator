@@ -25,7 +25,9 @@ class Poller:
         for worker in self._workers:
             worker.cancel()
         self.poll_task.cancel()
-        await asyncio.gather(*self._workers,self.poll_task, return_exceptions=True)
+        await asyncio.gather(
+            *self._workers, self.poll_task, return_exceptions=True
+        )
 
     async def _worker(self, queue):
         while True:
