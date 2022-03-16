@@ -12,7 +12,6 @@ class Poller:
         self.store = store
         self.is_running = False
         self.roll_task: Optional[Task] = None
-        self._stop_event = asyncio.Event()
         self._chat_queues: Dict[int, Queue] = {}
         self._workers: List[Task] = []
         self._concurrent_workers = 0

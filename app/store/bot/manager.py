@@ -85,11 +85,6 @@ class BotManager:
             if not game:
                 if payload == "start":
                     keyboard, text = await self.start(update.object.peer_id)
-                    self._auto_tasks[
-                        update.object.peer_id
-                    ] = asyncio.create_task(
-                        self.round_automation(update.object.peer_id)
-                    )
                 elif payload == "show_state":
                     finished_game = await self.app.store.exchange.get_stats(
                         update.object.peer_id
@@ -133,6 +128,9 @@ class BotManager:
         if not players:
             return GREETING, ALARM
         stocks = await self.app.store.exchange.create_game(players, peer_id)
+        self._auto_tasks[peer_id] = asyncio.create_task(
+            self.round_automation(peer_id)
+        )
         return STATIC, self.market_situtaion(stocks)
 
     async def send_keyboard(self, peer_id: int, keyboard=STATIC, text=" "):
