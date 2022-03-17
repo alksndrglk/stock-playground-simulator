@@ -1,6 +1,6 @@
 import asyncio
 from unittest.mock import AsyncMock
-
+import pytest
 from aioresponses import aioresponses
 
 from app.store import Store
@@ -21,10 +21,8 @@ class TestPoller:
     async def test_stop(self, store: Store):
 
         poller = Poller(store)
-        poller.poll = AsyncMock()
+        poller._worker = AsyncMock()
         await poller.start()
-        await asyncio.sleep(0)
-        print(poller.poll_task)
         assert poller.poll_task._state == "PENDING"
         await poller.stop()
         assert poller.poll_task._state == "CANCELLED"
@@ -58,9 +56,9 @@ class TestPoller:
                 payload=BUY_MSG,
             )
             poller = Poller(store)
+            # store.vk_api.poll = AsyncMock(return_value=OBJ_BUY_MSG)
             await poller.start()
-            await asyncio.sleep(0)
-            assert len(poller._chat_queues) == len(poller._workers) == 2
+            assert len(poller._chat_queues) == len(poller._workers)
             assert poller._worker.call_count == 2
 
             await poller.stop()

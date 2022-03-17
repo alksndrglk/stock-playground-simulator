@@ -1,3 +1,4 @@
+import asyncio
 import os
 from unittest.mock import AsyncMock
 import pytest
@@ -7,8 +8,7 @@ from app.store import Store
 from app.web.app import setup_app
 from app.web.config import Config
 from app.store import Database
-import sqlalchemy
-import logging
+from tests.data import *
 
 
 @pytest.fixture(scope="session")
@@ -27,9 +27,6 @@ def server():
     app.on_startup.clear()
     app.on_shutdown.clear()
     app.store.vk_api = AsyncMock()
-    app.store.vk_api.send_message = AsyncMock()
-    app.store.vk_api.send_answer = AsyncMock()
-    # app.store.vk_api.poll = AsyncMock()
 
     app.database = Database(app)
     app.on_startup.append(app.database.connect)
@@ -79,3 +76,38 @@ async def authed_cli(cli, config) -> TestClient:
         },
     )
     yield cli
+
+
+@pytest.fixture
+def create_mock_coro(mocker, monkeypatch):
+    """Create a mock-coro pair.
+    The coro can be used to patch an async method while the mock can
+    be used to assert calls to the mocked out method.
+    """
+
+    def _create_mock_coro_pair(to_patch=None):
+        mock = mocker.Mock()
+
+        async def _coro(*args, **kwargs):
+            return mock(*args, **kwargs)
+
+        if to_patch:
+            monkeypatch.setattr(to_patch, _coro)
+
+        return mock, _coro
+
+    return _create_mock_coro_pair
+
+
+@pytest.fixture
+def mock_queue(mocker, monkeypatch):
+    queue = mocker.Mock()
+    monkeypatch.setattr(asyncio, "Queue", queue)
+    return queue.return_value
+
+
+@pytest.fixture
+def mock_get(mock_queue, create_mock_coro):
+    mock_get, coro_get = create_mock_coro()
+    mock_queue.get = coro_get
+    return mock_get

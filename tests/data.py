@@ -1,5 +1,17 @@
+from app.stock.models import Stock
 from app.store.vk_api.dataclasses import Update, UpdateObject
 
+STOCKS = {
+    "AAPL": Stock(
+        symbol="AAPL", description="Apple", cost=10.99, game_id=185, id=1586
+    ),
+    "AMZN": Stock(
+        symbol="AMZN", description="Amazon", cost=15.99, game_id=185, id=1587
+    ),
+    "TSL": Stock(
+        symbol="TSL", description="Tesla", cost=18.99, game_id=185, id=1588
+    ),
+}
 
 START_BUTTON = {
     "ts": "2620",
