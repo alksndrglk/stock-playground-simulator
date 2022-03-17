@@ -6,6 +6,15 @@ from app.store.vk_api.dataclasses import Update, UpdateObject, Message
 from app.store.bot.keyboards import END, GREETING, STATIC
 from tests.data import OBJ_BUY_MSG, OBJ_FINISHED_BIDDING, STOCKS
 
+
+class TestFinishRound:
+    async def test_success(self, store, game_2_usrs):
+        upd = OBJ_FINISHED_BIDDING[0].object
+        k, m = await store.bots_manager.finish_round(game_2_usrs)
+        assert k == STATIC
+        assert "раунд торгов окончен" in m
+
+
 class TestUserFinishedBidding:
     async def test_success(self, store, game_2_usrs):
         upd = OBJ_FINISHED_BIDDING[0].object
@@ -25,10 +34,12 @@ class TestUserFinishedBidding:
     async def test_all_finished(self, store, game):
         upd = OBJ_FINISHED_BIDDING[0].object
 
-        store.bots_manager.finish_round = AsyncMock(return_value=(STATIC, "раунд торгов окончен"))
+        store.bots_manager.finish_round = AsyncMock(
+            return_value=(STATIC, "раунд торгов окончен")
+        )
         k, m = await store.bots_manager.user_finished_bidding(game, upd)
         assert k == STATIC
-        assert "раунд торгов окончен" in  m
+        assert "раунд торгов окончен" in m
 
 
 class TestStartGame:
@@ -47,12 +58,11 @@ class TestStartGame:
 
     async def test_no_players(self, store):
         from app.store.bot.const import ALARM
+
         store.vk_api.get_conversation_members = AsyncMock(return_value=[])
         k, m = await store.bots_manager.start(1)
         assert k == GREETING
         assert m == ALARM
-
-
 
 
 class TestMessageProcessing:
